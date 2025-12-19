@@ -1,0 +1,28 @@
+{
+  "name": "ai-chat",
+  "version": "1.0.0",
+  "description": "Terminal-based AI chat application supporting Ollama and OpenRouter",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "ai-chat": "dist/index.js"
+  },
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js"
+  },
+  "keywords": ["ai", "chat", "ollama", "openrouter", "cli"],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.26.1",
+  "devDependencies": {
+    "@types/node": "^25.0.3",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "chalk": "^5.6.2",
+    "commander": "^14.0.2"
+  }
+}

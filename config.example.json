@@ -1,0 +1,14 @@
+{
+  "ollama": {
+    "baseUrl": "http://localhost:11434",
+    "model": "llama2"
+  },
+  "openrouter": {
+    "baseUrl": "https://openrouter.ai/api/v1",
+    "model": "anthropic/claude-3.5-sonnet",
+    "apiKey": "sk-or-v1-..."
+  },
+  "defaults": {
+    "provider": "ollama"
+  }
+}
