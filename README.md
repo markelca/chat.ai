@@ -9,9 +9,10 @@ A simple terminal-based AI chat application that supports multiple providers inc
 - 💬 Conversation history within a session
 - 🔌 Support for multiple providers (Ollama and OpenRouter)
 - 💾 Pluggable storage backends (in-memory or Redis)
-- 🖥️ Pluggable output/view layer (stdout, future: SSE, File)
+- 🖥️ Pluggable output/view layer (stdout, Redis pub/sub, composite)
+- 🌐 **Real-time web streaming** - View conversations in a web browser via SSE
 - ⚙️ JSON-based configuration
-- 🐳 Docker support for Redis
+- 🐳 Docker support for Redis and web app
 - 🎨 Colored terminal output
 
 ## Installation
@@ -37,21 +38,26 @@ pnpm build
 
 ## Docker Setup
 
-The project includes Docker support for running Redis as a message history storage backend.
+The project includes Docker support for running Redis and the web streaming application.
 
-### Starting Redis with Docker
+### Starting Services with Docker
 
 ```bash
-# Start Redis container
+# Start all services (Redis + Web app)
 docker compose up -d
 
-# Check Redis is running
+# Start only Redis
+docker compose up -d redis
+
+# Check services are running
 docker compose ps
 
-# View Redis logs
-docker compose logs -f redis
+# View logs
+docker compose logs -f         # All services
+docker compose logs -f redis   # Redis only
+docker compose logs -f web     # Web app only
 
-# Stop Redis container
+# Stop all services
 docker compose down
 ```
 
@@ -59,6 +65,11 @@ The Redis container will:
 - Run on port 6379
 - Persist data in a Docker volume named `redis-data`
 - Use AOF (Append Only File) persistence for durability
+
+The web container will:
+- Run on port 3000
+- Connect to Redis for message streaming
+- Provide SSE endpoint at `/api/stream`
 
 ## Configuration
 
@@ -216,6 +227,88 @@ Alternatively, use environment variables without modifying config:
 REDIS_ENABLED=true REDIS_SESSION_NAME=my-session pnpm dev
 ```
 
+### Web Streaming (Real-time Browser View)
+
+Stream your CLI conversation to a web browser in real-time using Server-Sent Events (SSE).
+
+#### Architecture
+
+The web streaming feature uses a dual-output architecture:
+- **CLI app** broadcasts output to both terminal (stdout) AND Redis pub/sub
+- **Web app** subscribes to Redis and streams to the browser via SSE
+- Messages flow: CLI → Redis pub/sub → Web app → Browser (SSE)
+
+#### Setup and Usage
+
+1. Enable web streaming in your `config.json`:
+```json
+{
+  "webStream": {
+    "enabled": true,
+    "redisChannel": "ai-chat:stream",
+    "redisHost": "localhost",
+    "redisPort": 6379
+  }
+}
+```
+
+2. Start Redis and the web app using Docker:
+```bash
+docker compose up -d
+```
+
+This starts:
+- Redis server on port 6379
+- Next.js web app on port 3000
+
+3. Run the CLI app with web streaming enabled:
+```bash
+# Using config.json
+pnpm dev
+
+# Or using environment variables
+WEB_STREAM_ENABLED=true pnpm dev
+```
+
+4. Open your browser to `http://localhost:3000` to view the live stream
+
+5. Start chatting in the terminal - you'll see messages appear in real-time in the browser!
+
+#### Web Streaming Configuration
+
+**CLI App (.env or config.json):**
+- `WEB_STREAM_ENABLED` - Enable/disable web streaming (default: `false`)
+- `WEB_STREAM_REDIS_CHANNEL` - Redis pub/sub channel name (default: `ai-chat:stream`)
+- `WEB_STREAM_REDIS_HOST` - Redis host (default: `localhost`)
+- `WEB_STREAM_REDIS_PORT` - Redis port (default: `6379`)
+- `WEB_STREAM_REDIS_PASSWORD` - Redis password (optional)
+
+**Web App (web/.env):**
+- `REDIS_HOST` - Redis server hostname
+- `REDIS_PORT` - Redis server port
+- `REDIS_PASSWORD` - Redis password (optional)
+- `REDIS_CHANNEL` - Redis pub/sub channel (must match CLI's `WEB_STREAM_REDIS_CHANNEL`)
+
+See `web/README.md` for more details on the web application.
+
+#### Features
+
+- **Read-only display**: Web UI is view-only (no input), terminal is for interaction
+- **Real-time streaming**: See AI responses as they're generated, character by character
+- **Connection status**: Visual indicator shows connection state
+- **Message types**: Different styling for prompts, responses, errors, info, warnings
+- **Auto-scroll**: Messages automatically scroll as they arrive
+- **Reconnection**: Automatically reconnects if connection is lost
+
+#### Architecture Details
+
+The web streaming implementation follows the project's abstraction philosophy:
+- **MessageSubscriber** abstract class allows different message brokers (currently Redis)
+- **CompositeView** pattern broadcasts to multiple outputs simultaneously
+- **OutputView** async interface supports network I/O for Redis publishing
+
+See `CLAUDE.md` for detailed architecture documentation.
+
 ## Providers
 
 ### Ollama
@@ -234,7 +327,7 @@ Available models can be found at [openrouter.ai/models](https://openrouter.ai/mo
 
 ```
 /
-├── src/
+├── src/                     # CLI Application
 │   ├── providers/
 │   │   ├── base.ts          # Provider interface and types
 │   │   ├── ollama.ts        # Ollama implementation
@@ -244,18 +337,40 @@ Available models can be found at [openrouter.ai/models](https://openrouter.ai/mo
 │   │   ├── InMemoryMessageHistory.ts  # In-memory implementation
 │   │   └── RedisMessageHistory.ts     # Redis implementation
 │   ├── output/
-│   │   ├── OutputView.ts    # Abstract output interface
-│   │   └── StdoutView.ts    # Terminal output implementation
+│   │   ├── OutputView.ts          # Abstract output interface
+│   │   ├── StdoutView.ts          # Terminal output implementation
+│   │   ├── RedisPublisherView.ts  # Redis pub/sub output
+│   │   ├── CompositeView.ts       # Composite pattern for dual output
+│   │   └── types.ts               # Message types for pub/sub
 │   ├── config/
 │   │   └── manager.ts       # Configuration management
 │   ├── cli/
 │   │   ├── repl.ts          # REPL implementation
 │   │   └── parser.ts        # CLI argument parsing
 │   └── index.ts             # Application entry point
+├── web/                     # Next.js Web Application
+│   ├── src/
+│   │   ├── app/
+│   │   │   ├── api/stream/  # SSE endpoint
+│   │   │   ├── layout.tsx   # Root layout
+│   │   │   ├── page.tsx     # Main page
+│   │   │   └── globals.css  # Global styles
+│   │   ├── components/
+│   │   │   └── ChatDisplay.tsx  # Chat UI component
+│   │   ├── lib/
+│   │   │   ├── MessageSubscriber.ts      # Abstract subscriber
+│   │   │   ├── RedisMessageSubscriber.ts # Redis implementation
+│   │   │   └── createSubscriber.ts       # Factory function
+│   │   └── types/
+│   │       └── messages.ts  # Shared message types
+│   ├── Dockerfile           # Web app Docker build
+│   ├── docker-compose.yml   # Standalone web + Redis
+│   └── README.md            # Web app documentation
 ├── dist/                    # Compiled JavaScript (after build)
-├── docker-compose.yml       # Redis container setup
+├── docker-compose.yml       # Combined Redis + Web setup
 ├── .env.example             # Environment variable examples
 ├── config.example.json      # Example configuration
+├── CLAUDE.md                # Project guidance for Claude Code
 ├── package.json
 ├── tsconfig.json
 └── README.md

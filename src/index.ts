@@ -9,7 +9,8 @@ import type { Provider, ChatOptions } from "./providers/base.js";
 import { InMemoryMessageHistory } from "./storage/InMemoryMessageHistory.js";
 import { RedisMessageHistory } from "./storage/RedisMessageHistory.js";
 import type { MessageHistory } from "./storage/MessageHistory.js";
-import { StdoutView } from "./output/StdoutView.js";
+import { StdoutView, RedisPublisherView, CompositeView } from "./output/index.js";
+import type { OutputView } from "./output/OutputView.js";
 
 async function main() {
   try {
@@ -42,7 +43,20 @@ async function main() {
     }
 
     // Setup output view
-    const view = new StdoutView();
+    const views: OutputView[] = [new StdoutView()];
+
+    // Add Redis publisher if web streaming is enabled
+    const webStreamConfig = configManager.getWebStreamConfig();
+    if (webStreamConfig && webStreamConfig.enabled) {
+      views.push(new RedisPublisherView({
+        channel: webStreamConfig.redisChannel,
+        host: webStreamConfig.redisHost,
+        port: webStreamConfig.redisPort,
+        password: webStreamConfig.redisPassword,
+      }));
+    }
+
+    const view = new CompositeView(views);
 
     // Setup message history storage
     let messageHistory: MessageHistory;

@@ -16,6 +16,13 @@
     "sessionName": "default-session",
     "ttl": 3600
   },
+  "webStream": {
+    "enabled": false,
+    "redisChannel": "ai-chat:stream",
+    "redisHost": "localhost",
+    "redisPort": 6379,
+    "redisPassword": ""
+  },
   "defaults": {
     "provider": "ollama"
   }

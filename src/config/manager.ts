@@ -15,10 +15,19 @@ export interface RedisConfig {
   ttl?: number;
 }
 
+export interface WebStreamConfig {
+  enabled: boolean;
+  redisChannel: string;
+  redisHost?: string;
+  redisPort?: number;
+  redisPassword?: string;
+}
+
 export interface Config {
   ollama: ProviderConfig;
   openrouter: ProviderConfig;
   redis?: RedisConfig;
+  webStream?: WebStreamConfig;
   defaults: {
     provider: 'ollama' | 'openrouter';
   };
@@ -39,6 +48,12 @@ const DEFAULT_CONFIG: Config = {
     host: 'localhost',
     port: 6379,
     sessionName: 'default-session',
+  },
+  webStream: {
+    enabled: false,
+    redisChannel: 'ai-chat:stream',
+    redisHost: 'localhost',
+    redisPort: 6379,
   },
   defaults: {
     provider: 'ollama',
@@ -161,5 +176,36 @@ export class ConfigManager {
     }
 
     return redisConfig;
+  }
+
+  getWebStreamConfig(): WebStreamConfig | null {
+    if (!this.config) {
+      throw new Error('Config not loaded. Call load() first.');
+    }
+
+    if (!this.config.webStream) {
+      return null;
+    }
+
+    // Apply environment variable overrides
+    const webStreamConfig = { ...this.config.webStream };
+
+    if (process.env.WEB_STREAM_ENABLED !== undefined) {
+      webStreamConfig.enabled = process.env.WEB_STREAM_ENABLED === 'true';
+    }
+    if (process.env.WEB_STREAM_REDIS_CHANNEL) {
+      webStreamConfig.redisChannel = process.env.WEB_STREAM_REDIS_CHANNEL;
+    }
+    if (process.env.WEB_STREAM_REDIS_HOST) {
+      webStreamConfig.redisHost = process.env.WEB_STREAM_REDIS_HOST;
+    }
+    if (process.env.WEB_STREAM_REDIS_PORT) {
+      webStreamConfig.redisPort = parseInt(process.env.WEB_STREAM_REDIS_PORT, 10);
+    }
+    if (process.env.WEB_STREAM_REDIS_PASSWORD) {
+      webStreamConfig.redisPassword = process.env.WEB_STREAM_REDIS_PASSWORD;
+    }
+
+    return webStreamConfig;
   }
 }

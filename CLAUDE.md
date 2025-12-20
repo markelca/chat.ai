@@ -78,13 +78,13 @@ The config now includes an optional `redis` section with connection details. The
 - Environment variables take precedence over config file values
 
 ### Output/View Abstraction
-The application abstracts output/display handling through the `OutputView` abstract class (`src/output/OutputView.ts`). This allows output to be directed to different destinations:
+The application abstracts output/display handling through the `OutputView` abstract class (`src/output/OutputView.ts`). All methods are **asynchronous** to support network I/O. Current implementations:
 
 - `StdoutView` - Default implementation, outputs to terminal with colors using chalk
-- Future: `SSEView` - Server-Sent Events for web interfaces
-- Future: `FileView` - Write conversation logs to files
+- `RedisPublisherView` - Publishes messages to Redis pub/sub for web streaming
+- `CompositeView` - Composite pattern that broadcasts to multiple OutputView backends simultaneously
 
-**OutputView Methods:**
+**OutputView Methods (all async):**
 The abstraction provides fine-grained methods for different output types:
 - `displayWelcome()` - Startup message
 - `displayHelp()` / `displayCommandHelp()` - Help text
@@ -95,7 +95,26 @@ The abstraction provides fine-grained methods for different output types:
 - `displaySystemMessage()` - App state changes (cleared, goodbye)
 
 **Output Selection:**
-The output backend is created in `src/index.ts:44` and passed to the REPL. Currently defaults to `StdoutView`. To use a different output backend, instantiate the desired `OutputView` implementation and pass it to the REPL constructor.
+The output backend is created in `src/index.ts:45-59`. If web streaming is enabled, a `CompositeView` is created with both `StdoutView` and `RedisPublisherView`, broadcasting to terminal AND web simultaneously. Otherwise, just `StdoutView` is used.
+
+**Web Streaming Architecture:**
+When web streaming is enabled (`webStream.enabled: true` in config or `WEB_STREAM_ENABLED=true` env var):
+1. CLI creates `CompositeView([StdoutView, RedisPublisherView])`
+2. All output methods broadcast to both views via `Promise.all()`
+3. `RedisPublisherView` publishes JSON messages to Redis pub/sub channel
+4. Web app (Next.js) subscribes to Redis channel via `MessageSubscriber`
+5. Browser receives messages via Server-Sent Events (SSE)
+
+**Message Format:**
+```typescript
+interface OutputMessage {
+  type: 'welcome' | 'prompt' | 'chunk' | 'complete' | 'error' | 'info' | 'warning' | 'system' | ...;
+  payload: { content?: string; providerName?: string; promptText?: string; };
+  timestamp: number;
+}
+```
+
+Messages are JSON-serialized before publishing to Redis, then deserialized by the web app.
 
 ### REPL Interface
 The `REPL` class (`src/cli/repl.ts`) manages the interactive chat loop:
@@ -138,6 +157,49 @@ This approach keeps the development workflow simple while providing optional per
 - Health checks for connection verification
 - No automatic restart (manual start/stop)
 
+## Web Streaming Architecture (Next.js + SSE)
+
+The web streaming feature enables real-time viewing of CLI conversations in a web browser.
+
+**Architecture Overview:**
+```
+CLI App (src/) → CompositeView
+                  ├─> StdoutView (terminal)
+                  └─> RedisPublisherView → Redis Pub/Sub
+                                              │
+                                              ▼
+Web App (web/) ← MessageSubscriber ← Redis Pub/Sub
+                      │
+                      └─> SSE Endpoint (/api/stream)
+                              │
+                              └─> Browser (EventSource)
+```
+
+**CLI Components:**
+- `OutputView` - Async abstract class for output backends
+- `StdoutView` - Terminal output with chalk colors
+- `RedisPublisherView` - Publishes to Redis pub/sub channel
+- `CompositeView` - Broadcasts to multiple views with `Promise.all()`
+- `types.ts` - Shared message types (`OutputMessage`, `MessageType`)
+
+**Web Components:**
+- `MessageSubscriber` (abstract) - Message broker subscription interface
+- `RedisMessageSubscriber` - Redis pub/sub implementation
+- `createSubscriber()` - Factory function for creating subscribers
+- `/api/stream` (Next.js route) - SSE endpoint using ReadableStream
+- `ChatDisplay` (React) - Browser UI with EventSource
+
+**Configuration:**
+- CLI: `config.json` webStream section or `WEB_STREAM_*` env vars
+- Web: `REDIS_HOST`, `REDIS_PORT`, `REDIS_CHANNEL` env vars
+
+**Docker Deployment:**
+The `docker-compose.yml` includes both Redis and the Next.js web app:
+```bash
+docker compose up -d        # Starts Redis + web app
+# Then run CLI with WEB_STREAM_ENABLED=true
+```
+
 ## Infrastructure Abstraction Philosophy
 
 This codebase follows a pattern of abstracting infrastructure decisions behind interfaces. When implementing or extending infrastructure-level abstractions, **always ask the user for confirmation and present multiple options** rather than choosing an implementation unilaterally.
@@ -148,17 +210,32 @@ This codebase follows a pattern of abstracting infrastructure decisions behind i
    - Message history storage: Redis, PostgreSQL, MongoDB, in-memory, filesystem, etc.
    - Session management: Database, Redis, JWT, etc.
    - When implementing: Present options with trade-offs (persistence, performance, complexity, dependencies)
-   - **Current abstraction**: `MessageHistory` (in-memory, Redis)
+   - **Current abstraction**: `MessageHistory` (InMemoryMessageHistory, RedisMessageHistory)
 
 2. **Output Mechanisms**
-   - Chat streaming output: stdout (current), WebSocket, Server-Sent Events, HTTP polling, file output
+   - Chat streaming output: stdout, Redis pub/sub, WebSocket, Server-Sent Events, file output
    - Logging: console, file, external service
    - When implementing: Consider the use case and present appropriate options
-   - **Current abstraction**: `OutputView` (stdout only, designed for SSE and File)
+   - **Current abstraction**: `OutputView` (StdoutView, RedisPublisherView, CompositeView)
 
-3. **Input/Interface Layers**
+3. **Message Brokers** (Web Streaming)
+   - Pub/sub systems: Redis (current), RabbitMQ, Kafka, NATS, AWS SNS/SQS
+   - Real-time protocols: SSE (current), WebSocket, long polling
+   - When implementing: Consider latency, persistence, and complexity requirements
+   - **Current abstraction**: `MessageSubscriber` (RedisMessageSubscriber)
+
+4. **Input/Interface Layers**
    - User input: readline (current), HTTP API, WebSocket, gRPC
    - Configuration sources: JSON file (current), environment variables, database, remote config service
+
+### Implemented Abstractions Summary:
+
+| Abstraction | Location | Implementations | Pattern |
+|-------------|----------|-----------------|---------|
+| MessageHistory | `src/storage/` | InMemory, Redis | Abstract class + factory methods |
+| OutputView | `src/output/` | Stdout, RedisPublisher, Composite | Abstract async class + composite |
+| MessageSubscriber | `web/src/lib/` | RedisMessageSubscriber | Abstract class + factory function |
+| Provider | `src/providers/` | Ollama, OpenRouter | Interface + async generators |
 
 ### Guidance for Implementation:
 
@@ -167,3 +244,4 @@ When working on features that involve infrastructure abstractions:
 2. **Present options**: List 2-4 viable implementation options with brief pros/cons
 3. **Ask for confirmation**: Use the AskUserQuestion tool to get the user's preference
 4. **Design for extensibility**: Follow existing patterns (abstract classes/interfaces) to allow future alternatives
+5. **Use factory functions**: Decouple concrete implementations from usage sites (see `createSubscriber`)
