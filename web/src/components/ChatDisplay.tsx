@@ -16,6 +16,7 @@ export function ChatDisplay() {
   const [currentChunk, setCurrentChunk] = useState<string>('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const eventSourceRef = useRef<EventSource | null>(null);
+  const isFinalizingRef = useRef<boolean>(false);
 
   useEffect(() => {
     // Connect to SSE endpoint
@@ -35,6 +36,7 @@ export function ChatDisplay() {
     eventSource.onmessage = (event) => {
       try {
         const message: OutputMessage = JSON.parse(event.data);
+        console.log('[UI] Received message:', message.type, message);
 
         switch (message.type) {
           case 'welcome':
@@ -68,18 +70,37 @@ export function ChatDisplay() {
 
           case 'complete':
             // Finalize the current response
-            if (currentChunk) {
-              setMessages((prev) => [
-                ...prev,
-                {
-                  id: `${message.timestamp}`,
-                  type: 'assistant',
-                  content: currentChunk,
-                  timestamp: message.timestamp,
-                },
-              ]);
-              setCurrentChunk('');
-            }
+            console.log('[UI] Complete received');
+            setCurrentChunk((prev) => {
+              console.log('[UI] Finalizing chunk, length:', prev.length);
+              if (prev) {
+                const assistantMessageId = `assistant-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+                setMessages((msgs) => {
+                  // Check if we already have this exact content (prevent React Strict Mode duplicates)
+                  const isDuplicate = msgs.some(
+                    (m) => m.type === 'assistant' && m.content === prev &&
+                    Math.abs(m.timestamp - message.timestamp) < 100
+                  );
+
+                  if (isDuplicate) {
+                    console.log('[UI] Duplicate message detected, skipping');
+                    return msgs;
+                  }
+
+                  console.log('[UI] Adding assistant message to list with id:', assistantMessageId);
+                  return [
+                    ...msgs,
+                    {
+                      id: assistantMessageId,
+                      type: 'assistant',
+                      content: prev,
+                      timestamp: message.timestamp,
+                    },
+                  ];
+                });
+              }
+              return ''; // Reset chunk for next response
+            });
             break;
 
           case 'error':
