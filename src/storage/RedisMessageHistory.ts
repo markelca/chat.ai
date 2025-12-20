@@ -1,5 +1,14 @@
+import { createClient, RedisClientType } from 'redis';
 import { Message } from '../providers/base.js';
 import { MessageHistory } from './MessageHistory.js';
+
+export interface RedisConnectionOptions {
+  host?: string;
+  port?: number;
+  password?: string;
+  username?: string;
+  database?: number;
+}
 
 export interface RedisMessageHistoryOptions {
   /**
@@ -15,9 +24,8 @@ export interface RedisMessageHistoryOptions {
 
   /**
    * Redis connection options (host, port, password, etc.)
-   * TODO: Define specific Redis connection options based on the Redis client library
    */
-  redisOptions?: any;
+  redisOptions?: RedisConnectionOptions;
 }
 
 /**
@@ -40,8 +48,8 @@ export class RedisMessageHistory extends MessageHistory {
   private readonly sessionName: string;
   private readonly ttl?: number;
   private readonly redisKey: string;
-  // TODO: Add Redis client instance property
-  // private redisClient: RedisClient;
+  private redisClient: RedisClientType;
+  private connected: boolean = false;
 
   constructor(options: RedisMessageHistoryOptions) {
     super();
@@ -49,8 +57,30 @@ export class RedisMessageHistory extends MessageHistory {
     this.ttl = options.ttl;
     this.redisKey = `session:${this.sessionName}:messages`;
 
-    // TODO: Initialize Redis client with options.redisOptions
-    // this.redisClient = createRedisClient(options.redisOptions);
+    const redisOptions = options.redisOptions || {};
+    this.redisClient = createClient({
+      socket: {
+        host: redisOptions.host || 'localhost',
+        port: redisOptions.port || 6379,
+      },
+      password: redisOptions.password,
+      username: redisOptions.username,
+      database: redisOptions.database || 0,
+    });
+
+    this.redisClient.on('error', (err) => {
+      console.error('Redis Client Error:', err);
+    });
+  }
+
+  /**
+   * Ensures the Redis client is connected before operations.
+   */
+  private async ensureConnected(): Promise<void> {
+    if (!this.connected) {
+      await this.redisClient.connect();
+      this.connected = true;
+    }
   }
 
   /**
@@ -66,13 +96,12 @@ export class RedisMessageHistory extends MessageHistory {
    * - EXPIRE session:{sessionName}:messages {ttl} (if TTL is set)
    */
   async add(message: Message): Promise<void> {
-    // TODO: Implement Redis RPUSH
-    // const serialized = JSON.stringify(message);
-    // await this.redisClient.rpush(this.redisKey, serialized);
-    // if (this.ttl) {
-    //   await this.redisClient.expire(this.redisKey, this.ttl);
-    // }
-    throw new Error('RedisMessageHistory.add() not implemented yet');
+    await this.ensureConnected();
+    const serialized = JSON.stringify(message);
+    await this.redisClient.rPush(this.redisKey, serialized);
+    if (this.ttl) {
+      await this.redisClient.expire(this.redisKey, this.ttl);
+    }
   }
 
   /**
@@ -87,10 +116,9 @@ export class RedisMessageHistory extends MessageHistory {
    * - LRANGE session:{sessionName}:messages 0 -1
    */
   async getAll(): Promise<Message[]> {
-    // TODO: Implement Redis LRANGE
-    // const serializedMessages = await this.redisClient.lrange(this.redisKey, 0, -1);
-    // return serializedMessages.map(str => JSON.parse(str) as Message);
-    throw new Error('RedisMessageHistory.getAll() not implemented yet');
+    await this.ensureConnected();
+    const serializedMessages = await this.redisClient.lRange(this.redisKey, 0, -1);
+    return serializedMessages.map(str => JSON.parse(str) as Message);
   }
 
   /**
@@ -103,9 +131,8 @@ export class RedisMessageHistory extends MessageHistory {
    * - DEL session:{sessionName}:messages
    */
   async clear(): Promise<void> {
-    // TODO: Implement Redis DEL
-    // await this.redisClient.del(this.redisKey);
-    throw new Error('RedisMessageHistory.clear() not implemented yet');
+    await this.ensureConnected();
+    await this.redisClient.del(this.redisKey);
   }
 
   /**
@@ -113,8 +140,9 @@ export class RedisMessageHistory extends MessageHistory {
    * Call this when done with the message history to clean up resources.
    */
   async disconnect(): Promise<void> {
-    // TODO: Implement Redis client disconnect
-    // await this.redisClient.quit();
-    throw new Error('RedisMessageHistory.disconnect() not implemented yet');
+    if (this.connected) {
+      await this.redisClient.quit();
+      this.connected = false;
+    }
   }
 }

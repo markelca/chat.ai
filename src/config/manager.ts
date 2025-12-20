@@ -4,9 +4,21 @@ import { homedir } from 'os';
 import { join } from 'path';
 import type { ProviderConfig } from '../providers/base.js';
 
+export interface RedisConfig {
+  enabled: boolean;
+  host: string;
+  port: number;
+  password?: string;
+  username?: string;
+  database?: number;
+  sessionName: string;
+  ttl?: number;
+}
+
 export interface Config {
   ollama: ProviderConfig;
   openrouter: ProviderConfig;
+  redis?: RedisConfig;
   defaults: {
     provider: 'ollama' | 'openrouter';
   };
@@ -21,6 +33,12 @@ const DEFAULT_CONFIG: Config = {
     baseUrl: 'https://openrouter.ai/api/v1',
     model: 'anthropic/claude-3.5-sonnet',
     apiKey: '',
+  },
+  redis: {
+    enabled: false,
+    host: 'localhost',
+    port: 6379,
+    sessionName: 'default-session',
   },
   defaults: {
     provider: 'ollama',
@@ -103,5 +121,45 @@ export class ConfigManager {
     }
 
     return this.config.defaults.provider;
+  }
+
+  getRedisConfig(): RedisConfig | null {
+    if (!this.config) {
+      throw new Error('Config not loaded. Call load() first.');
+    }
+
+    if (!this.config.redis) {
+      return null;
+    }
+
+    // Apply environment variable overrides
+    const redisConfig = { ...this.config.redis };
+
+    if (process.env.REDIS_ENABLED !== undefined) {
+      redisConfig.enabled = process.env.REDIS_ENABLED === 'true';
+    }
+    if (process.env.REDIS_HOST) {
+      redisConfig.host = process.env.REDIS_HOST;
+    }
+    if (process.env.REDIS_PORT) {
+      redisConfig.port = parseInt(process.env.REDIS_PORT, 10);
+    }
+    if (process.env.REDIS_PASSWORD) {
+      redisConfig.password = process.env.REDIS_PASSWORD;
+    }
+    if (process.env.REDIS_USERNAME) {
+      redisConfig.username = process.env.REDIS_USERNAME;
+    }
+    if (process.env.REDIS_DATABASE) {
+      redisConfig.database = parseInt(process.env.REDIS_DATABASE, 10);
+    }
+    if (process.env.REDIS_SESSION_NAME) {
+      redisConfig.sessionName = process.env.REDIS_SESSION_NAME;
+    }
+    if (process.env.REDIS_TTL) {
+      redisConfig.ttl = parseInt(process.env.REDIS_TTL, 10);
+    }
+
+    return redisConfig;
   }
 }

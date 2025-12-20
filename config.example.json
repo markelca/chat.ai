@@ -8,6 +8,14 @@
     "model": "anthropic/claude-3.5-sonnet",
     "apiKey": "sk-or-v1-..."
   },
+  "redis": {
+    "enabled": false,
+    "host": "localhost",
+    "port": 6379,
+    "password": "",
+    "sessionName": "default-session",
+    "ttl": 3600
+  },
   "defaults": {
     "provider": "ollama"
   }
