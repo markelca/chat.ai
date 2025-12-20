@@ -1,11 +1,11 @@
-import * as readline from 'readline/promises';
-import { stdin as input, stdout as output } from 'process';
-import chalk from 'chalk';
-import type { Provider, ChatOptions } from '../providers/base.js';
-import { MessageHistory } from '../storage/MessageHistory.js';
-import { InMemoryMessageHistory } from '../storage/InMemoryMessageHistory.js';
-import { OutputView } from '../output/OutputView.js';
-import { StdoutView } from '../output/StdoutView.js';
+import * as readline from "readline/promises";
+import { stdin as input, stdout as output } from "process";
+import chalk from "chalk";
+import type { Provider, ChatOptions } from "../providers/base.js";
+import { MessageHistory } from "../storage/MessageHistory.js";
+import { InMemoryMessageHistory } from "../storage/InMemoryMessageHistory.js";
+import { OutputView } from "../output/OutputView.js";
+import { StdoutView } from "../output/StdoutView.js";
 
 export class REPL {
   private provider: Provider;
@@ -14,7 +14,12 @@ export class REPL {
   private options?: ChatOptions;
   private rl: readline.Interface;
 
-  constructor(provider: Provider, options?: ChatOptions, messageHistory?: MessageHistory, view?: OutputView) {
+  constructor(
+    provider: Provider,
+    options?: ChatOptions,
+    messageHistory?: MessageHistory,
+    view?: OutputView,
+  ) {
     this.provider = provider;
     this.options = options;
     this.messageHistory = messageHistory ?? new InMemoryMessageHistory();
@@ -27,7 +32,7 @@ export class REPL {
 
     while (true) {
       try {
-        const userInput = await this.rl.question(chalk.green('You: '));
+        const userInput = await this.rl.question(chalk.green("You: "));
 
         if (!userInput.trim()) {
           continue;
@@ -38,19 +43,22 @@ export class REPL {
         }
 
         await this.messageHistory.add({
-          role: 'user',
+          role: "user",
           content: userInput,
         });
 
         await this.view.displayUserMessage(userInput);
 
-        await this.view.displayPrompt('Assistant');
+        await this.view.displayPrompt("Assistant");
 
-        let assistantResponse = '';
+        let assistantResponse = "";
 
         try {
           const messages = await this.messageHistory.getAll();
-          for await (const chunk of this.provider.chat(messages, this.options)) {
+          for await (const chunk of this.provider.chat(
+            messages,
+            this.options,
+          )) {
             await this.view.streamChunk(chunk);
             assistantResponse += chunk;
           }
@@ -58,14 +66,14 @@ export class REPL {
           await this.view.streamComplete();
 
           await this.messageHistory.add({
-            role: 'assistant',
+            role: "assistant",
             content: assistantResponse,
           });
         } catch (error) {
           await this.view.displayError(String(error));
         }
       } catch (error) {
-        if ((error as any).code === 'ERR_USE_AFTER_CLOSE') {
+        if ((error as any).code === "ERR_USE_AFTER_CLOSE") {
           break;
         }
         throw error;
@@ -77,25 +85,27 @@ export class REPL {
     const command = input.toLowerCase();
 
     switch (command) {
-      case '/quit':
-      case '/exit':
-        await this.view.displaySystemMessage('Goodbye!');
+      case "/quit":
+      case "/exit":
+        await this.view.displaySystemMessage("Goodbye!");
         this.rl.close();
         process.exit(0);
 
-      case '/clear':
+      case "/clear":
         await this.messageHistory.clear();
-        await this.view.displaySystemMessage('Conversation history cleared.\n');
+        await this.view.displaySystemMessage("Conversation history cleared.\n");
         return true;
 
-      case '/help':
+      case "/help":
         await this.view.displayCommandHelp();
         return true;
 
       default:
-        if (input.startsWith('/')) {
+        if (input.startsWith("/")) {
           await this.view.displayError(`Unknown command: ${input}`);
-          await this.view.displaySystemMessage('Type /help for available commands.\n');
+          await this.view.displaySystemMessage(
+            "Type /help for available commands.\n",
+          );
           return true;
         }
         return false;

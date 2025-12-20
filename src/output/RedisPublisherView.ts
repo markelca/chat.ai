@@ -1,6 +1,7 @@
-import { createClient, RedisClientType } from 'redis';
-import { OutputView } from './OutputView.js';
-import type { OutputMessage } from './types.js';
+import { createClient, RedisClientType } from "redis";
+import { OutputView } from "./OutputView.js";
+import type { OutputMessage } from "./types.js";
+import { WebStreamConfig } from "../config/manager.js";
 
 export interface RedisPublisherOptions {
   host?: string;
@@ -20,18 +21,27 @@ export class RedisPublisherView extends OutputView {
 
   constructor(options: RedisPublisherOptions = {}) {
     super();
-    this.channel = options.channel || 'ai-chat:stream';
+    this.channel = options.channel || "ai-chat:stream";
 
     this.redisClient = createClient({
       socket: {
-        host: options.host || 'localhost',
+        host: options.host || "localhost",
         port: options.port || 6379,
       },
       password: options.password,
     });
 
-    this.redisClient.on('error', (err) => {
-      console.error('Redis Publisher Error:', err);
+    this.redisClient.on("error", (err) => {
+      console.error("Redis Publisher Error:", err);
+    });
+  }
+
+  static fromWebStreamingConfig(config: WebStreamConfig): RedisPublisherView {
+    return new RedisPublisherView({
+      channel: config.redisChannel,
+      host: config.redisHost,
+      port: config.redisPort,
+      password: config.redisPassword,
     });
   }
 
@@ -55,7 +65,7 @@ export class RedisPublisherView extends OutputView {
 
   async displayWelcome(providerName: string): Promise<void> {
     await this.publish({
-      type: 'welcome',
+      type: "welcome",
       payload: { providerName },
       timestamp: Date.now(),
     });
@@ -63,7 +73,7 @@ export class RedisPublisherView extends OutputView {
 
   async displayHelp(): Promise<void> {
     await this.publish({
-      type: 'help',
+      type: "help",
       payload: {},
       timestamp: Date.now(),
     });
@@ -71,7 +81,7 @@ export class RedisPublisherView extends OutputView {
 
   async displayCommandHelp(): Promise<void> {
     await this.publish({
-      type: 'commandHelp',
+      type: "commandHelp",
       payload: {},
       timestamp: Date.now(),
     });
@@ -79,7 +89,7 @@ export class RedisPublisherView extends OutputView {
 
   async displayPrompt(promptText: string): Promise<void> {
     await this.publish({
-      type: 'prompt',
+      type: "prompt",
       payload: { promptText },
       timestamp: Date.now(),
     });
@@ -87,7 +97,7 @@ export class RedisPublisherView extends OutputView {
 
   async displayUserMessage(message: string): Promise<void> {
     await this.publish({
-      type: 'user',
+      type: "user",
       payload: { content: message },
       timestamp: Date.now(),
     });
@@ -95,7 +105,7 @@ export class RedisPublisherView extends OutputView {
 
   async streamChunk(chunk: string): Promise<void> {
     await this.publish({
-      type: 'chunk',
+      type: "chunk",
       payload: { content: chunk },
       timestamp: Date.now(),
     });
@@ -103,7 +113,7 @@ export class RedisPublisherView extends OutputView {
 
   async streamComplete(): Promise<void> {
     await this.publish({
-      type: 'complete',
+      type: "complete",
       payload: {},
       timestamp: Date.now(),
     });
@@ -111,7 +121,7 @@ export class RedisPublisherView extends OutputView {
 
   async displayError(error: string): Promise<void> {
     await this.publish({
-      type: 'error',
+      type: "error",
       payload: { content: error },
       timestamp: Date.now(),
     });
@@ -119,7 +129,7 @@ export class RedisPublisherView extends OutputView {
 
   async displayInfo(message: string): Promise<void> {
     await this.publish({
-      type: 'info',
+      type: "info",
       payload: { content: message },
       timestamp: Date.now(),
     });
@@ -127,7 +137,7 @@ export class RedisPublisherView extends OutputView {
 
   async displayWarning(message: string): Promise<void> {
     await this.publish({
-      type: 'warning',
+      type: "warning",
       payload: { content: message },
       timestamp: Date.now(),
     });
@@ -135,7 +145,7 @@ export class RedisPublisherView extends OutputView {
 
   async displaySystemMessage(message: string): Promise<void> {
     await this.publish({
-      type: 'system',
+      type: "system",
       payload: { content: message },
       timestamp: Date.now(),
     });
