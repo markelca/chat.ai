@@ -122,7 +122,7 @@ export function ChatDisplay() {
     return () => {
       eventSource.close();
     };
-  }, [currentChunk]);
+  }, []); // Empty dependency array - only connect once on mount
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {

@@ -12,12 +12,33 @@ export async function GET(request: Request) {
 
   const stream = new ReadableStream({
     async start(controller) {
+      let isCleanedUp = false;
+
+      const cleanup = async () => {
+        if (isCleanedUp) return;
+        isCleanedUp = true;
+
+        console.log('[SSE] Cleaning up connection...');
+        try {
+          await subscriber.unsubscribe();
+          await subscriber.disconnect();
+          try {
+            controller.close();
+          } catch (err) {
+            // Controller might already be closed, ignore
+          }
+        } catch (err) {
+          console.error('[SSE] Error during cleanup:', err);
+        }
+      };
+
       // Create message subscriber from environment configuration
       const subscriber = createSubscriber();
 
       subscriber.onError((err) => {
         console.error('[SSE] Subscriber Error:', err);
-        controller.error(err);
+        // Don't close the controller on subscriber errors
+        // Just log them - the connection should stay open
       });
 
       try {
@@ -50,17 +71,16 @@ export async function GET(request: Request) {
         // Handle client disconnection
         request.signal.addEventListener('abort', async () => {
           console.log('[SSE] Client disconnected, cleaning up...');
-          try {
-            await subscriber.unsubscribe();
-            await subscriber.disconnect();
-            controller.close();
-          } catch (err) {
-            console.error('[SSE] Error during cleanup:', err);
-          }
+          await cleanup();
         });
       } catch (err) {
         console.error('[SSE] Failed to connect to message broker:', err);
-        controller.error(err);
+        await cleanup();
+        try {
+          controller.error(err);
+        } catch (e) {
+          // Controller might already be closed
+        }
       }
     },
   });
