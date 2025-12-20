@@ -52,12 +52,16 @@ export function ChatDisplay() {
             break;
 
           case 'prompt':
+            // Skip prompt labels in web UI (they're terminal-specific)
+            break;
+
+          case 'user':
             setMessages((prev) => [
               ...prev,
               {
-                id: `${message.timestamp}`,
-                type: 'prompt',
-                content: message.payload.promptText || '',
+                id: `user-${message.timestamp}`,
+                type: 'user',
+                content: message.payload.content || '',
                 timestamp: message.timestamp,
               },
             ]);
@@ -70,20 +74,21 @@ export function ChatDisplay() {
 
           case 'complete':
             // Finalize the current response
-            console.log('[UI] Complete received');
+            console.log('[UI] Complete received, current chunk length:', currentChunk.length);
             setCurrentChunk((prev) => {
               console.log('[UI] Finalizing chunk, length:', prev.length);
               if (prev) {
                 const assistantMessageId = `assistant-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
                 setMessages((msgs) => {
-                  // Check if we already have this exact content (prevent React Strict Mode duplicates)
+                  // TODO: This is a workaround for React Strict Mode duplicates
+                  // Need to find a better solution to prevent duplicate processing
                   const isDuplicate = msgs.some(
                     (m) => m.type === 'assistant' && m.content === prev &&
                     Math.abs(m.timestamp - message.timestamp) < 100
                   );
 
                   if (isDuplicate) {
-                    console.log('[UI] Duplicate message detected, skipping');
+                    console.log('[UI] Duplicate message detected, skipping (WORKAROUND)');
                     return msgs;
                   }
 
@@ -161,6 +166,8 @@ export function ChatDisplay() {
       case 'info':
         return 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 border-l-4 border-gray-500';
       case 'prompt':
+        return 'bg-green-50 dark:bg-green-900/20 text-green-900 dark:text-green-100 border-l-4 border-green-500 font-semibold';
+      case 'user':
         return 'bg-green-50 dark:bg-green-900/20 text-green-900 dark:text-green-100 border-l-4 border-green-500 font-semibold';
       case 'assistant':
         return 'bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border-l-4 border-purple-500';

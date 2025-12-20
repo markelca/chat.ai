@@ -28,6 +28,12 @@ export abstract class OutputView {
   abstract displayPrompt(promptText: string): Promise<void>;
 
   /**
+   * Display a user message.
+   * @param message The user's message
+   */
+  abstract displayUserMessage(message: string): Promise<void>;
+
+  /**
    * Stream a single chunk of text (token-by-token streaming).
    * @param chunk The text chunk to display
    */

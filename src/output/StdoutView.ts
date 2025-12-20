@@ -1,5 +1,5 @@
-import chalk from 'chalk';
-import { OutputView } from './OutputView.js';
+import chalk from "chalk";
+import { OutputView } from "./OutputView.js";
 
 /**
  * Standard output implementation using console and process.stdout.
@@ -14,21 +14,28 @@ export class StdoutView extends OutputView {
   }
 
   async displayHelp(): Promise<void> {
-    console.log(chalk.gray('Type your message and press Enter. Special commands:'));
-    console.log(chalk.gray('  /quit or /exit - Exit the chat'));
-    console.log(chalk.gray('  /clear - Clear conversation history'));
-    console.log(chalk.gray('  /help - Show this help message\n'));
+    console.log(
+      chalk.gray("Type your message and press Enter. Special commands:"),
+    );
+    console.log(chalk.gray("  /quit or /exit - Exit the chat"));
+    console.log(chalk.gray("  /clear - Clear conversation history"));
+    console.log(chalk.gray("  /help - Show this help message\n"));
   }
 
   async displayCommandHelp(): Promise<void> {
-    console.log(chalk.gray('\nAvailable commands:'));
-    console.log(chalk.gray('  /quit or /exit - Exit the chat'));
-    console.log(chalk.gray('  /clear - Clear conversation history'));
-    console.log(chalk.gray('  /help - Show this help message\n'));
+    console.log(chalk.gray("\nAvailable commands:"));
+    console.log(chalk.gray("  /quit or /exit - Exit the chat"));
+    console.log(chalk.gray("  /clear - Clear conversation history"));
+    console.log(chalk.gray("  /help - Show this help message\n"));
   }
 
   async displayPrompt(promptText: string): Promise<void> {
     process.stdout.write(chalk.blue(`${promptText}: `));
+  }
+
+  async displayUserMessage(_message: string): Promise<void> {
+    // Not neccessary, since it's already in the readline
+    // and it would duplicate it
   }
 
   async streamChunk(chunk: string): Promise<void> {
@@ -36,7 +43,7 @@ export class StdoutView extends OutputView {
   }
 
   async streamComplete(): Promise<void> {
-    process.stdout.write('\n\n');
+    process.stdout.write("\n\n");
   }
 
   async displayError(error: string): Promise<void> {

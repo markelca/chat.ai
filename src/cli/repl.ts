@@ -42,6 +42,8 @@ export class REPL {
           content: userInput,
         });
 
+        await this.view.displayUserMessage(userInput);
+
         await this.view.displayPrompt('Assistant');
 
         let assistantResponse = '';

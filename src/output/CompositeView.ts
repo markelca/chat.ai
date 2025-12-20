@@ -38,6 +38,12 @@ export class CompositeView extends OutputView {
     );
   }
 
+  async displayUserMessage(message: string): Promise<void> {
+    await Promise.all(
+      this.views.map(view => view.displayUserMessage(message))
+    );
+  }
+
   async streamChunk(chunk: string): Promise<void> {
     await Promise.all(
       this.views.map(view => view.streamChunk(chunk))

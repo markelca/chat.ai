@@ -8,6 +8,7 @@ export type MessageType =
   | 'help'
   | 'commandHelp'
   | 'prompt'
+  | 'user'
   | 'chunk'
   | 'complete'
   | 'error'

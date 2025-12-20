@@ -6,6 +6,7 @@ export type MessageType =
   | 'welcome'
   | 'help'
   | 'prompt'
+  | 'user'
   | 'chunk'
   | 'complete'
   | 'error'

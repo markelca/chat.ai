@@ -85,6 +85,14 @@ export class RedisPublisherView extends OutputView {
     });
   }
 
+  async displayUserMessage(message: string): Promise<void> {
+    await this.publish({
+      type: 'user',
+      payload: { content: message },
+      timestamp: Date.now(),
+    });
+  }
+
   async streamChunk(chunk: string): Promise<void> {
     await this.publish({
       type: 'chunk',
