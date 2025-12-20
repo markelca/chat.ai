@@ -58,6 +58,7 @@ export class OllamaProvider implements Provider {
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
+      let buffer = '';
 
       while (true) {
         const { done, value } = await reader.read();
@@ -66,10 +67,20 @@ export class OllamaProvider implements Provider {
           break;
         }
 
-        const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split('\n').filter((line) => line.trim());
+        // Append new chunk to buffer
+        buffer += decoder.decode(value, { stream: true });
+
+        // Process complete lines (ending with \n)
+        const lines = buffer.split('\n');
+
+        // Keep the last incomplete line in the buffer
+        buffer = lines.pop() || '';
 
         for (const line of lines) {
+          if (!line.trim()) {
+            continue;
+          }
+
           try {
             const data: OllamaStreamResponse = JSON.parse(line);
 
