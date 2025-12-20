@@ -9,6 +9,7 @@ import type { Provider, ChatOptions } from './providers/base.js';
 import { InMemoryMessageHistory } from './storage/InMemoryMessageHistory.js';
 import { RedisMessageHistory } from './storage/RedisMessageHistory.js';
 import type { MessageHistory } from './storage/MessageHistory.js';
+import { StdoutView } from './output/StdoutView.js';
 
 async function main() {
   try {
@@ -39,13 +40,16 @@ async function main() {
       chatOptions.model = cliOptions.model;
     }
 
+    // Setup output view
+    const view = new StdoutView();
+
     // Setup message history storage
     let messageHistory: MessageHistory;
     const redisConfig = configManager.getRedisConfig();
 
     if (redisConfig && redisConfig.enabled) {
       try {
-        console.log('Attempting to connect to Redis...');
+        view.displayInfo('Attempting to connect to Redis...');
         messageHistory = new RedisMessageHistory({
           sessionName: redisConfig.sessionName,
           ttl: redisConfig.ttl,
@@ -59,17 +63,17 @@ async function main() {
         });
         // Test connection by trying to get all messages
         await messageHistory.getAll();
-        console.log('Connected to Redis successfully.\n');
+        view.displayInfo('Connected to Redis successfully.\n');
       } catch (error) {
-        console.warn(`Warning: Could not connect to Redis: ${error}`);
-        console.warn('Falling back to in-memory storage.\n');
+        view.displayWarning(`Warning: Could not connect to Redis: ${error}`);
+        view.displayWarning('Falling back to in-memory storage.\n');
         messageHistory = new InMemoryMessageHistory();
       }
     } else {
       messageHistory = new InMemoryMessageHistory();
     }
 
-    const repl = new REPL(provider, chatOptions, messageHistory);
+    const repl = new REPL(provider, chatOptions, messageHistory, view);
     await repl.start();
   } catch (error) {
     console.error(`Error: ${error}`);

@@ -4,26 +4,26 @@ import chalk from 'chalk';
 import type { Provider, ChatOptions } from '../providers/base.js';
 import { MessageHistory } from '../storage/MessageHistory.js';
 import { InMemoryMessageHistory } from '../storage/InMemoryMessageHistory.js';
+import { OutputView } from '../output/OutputView.js';
+import { StdoutView } from '../output/StdoutView.js';
 
 export class REPL {
   private provider: Provider;
   private messageHistory: MessageHistory;
+  private view: OutputView;
   private options?: ChatOptions;
   private rl: readline.Interface;
 
-  constructor(provider: Provider, options?: ChatOptions, messageHistory?: MessageHistory) {
+  constructor(provider: Provider, options?: ChatOptions, messageHistory?: MessageHistory, view?: OutputView) {
     this.provider = provider;
     this.options = options;
     this.messageHistory = messageHistory ?? new InMemoryMessageHistory();
+    this.view = view ?? new StdoutView();
     this.rl = readline.createInterface({ input, output });
   }
 
   async start(): Promise<void> {
-    console.log(chalk.bold.cyan(`\nAI Chat - ${this.provider.name}`));
-    console.log(chalk.gray('Type your message and press Enter. Special commands:'));
-    console.log(chalk.gray('  /quit or /exit - Exit the chat'));
-    console.log(chalk.gray('  /clear - Clear conversation history'));
-    console.log(chalk.gray('  /help - Show this help message\n'));
+    this.view.displayWelcome(this.provider.name);
 
     while (true) {
       try {
@@ -42,25 +42,25 @@ export class REPL {
           content: userInput,
         });
 
-        process.stdout.write(chalk.blue('Assistant: '));
+        this.view.displayPrompt('Assistant');
 
         let assistantResponse = '';
 
         try {
           const messages = await this.messageHistory.getAll();
           for await (const chunk of this.provider.chat(messages, this.options)) {
-            process.stdout.write(chunk);
+            this.view.streamChunk(chunk);
             assistantResponse += chunk;
           }
 
-          process.stdout.write('\n\n');
+          this.view.streamComplete();
 
           await this.messageHistory.add({
             role: 'assistant',
             content: assistantResponse,
           });
         } catch (error) {
-          console.error(chalk.red(`\n\nError: ${error}\n`));
+          this.view.displayError(String(error));
         }
       } catch (error) {
         if ((error as any).code === 'ERR_USE_AFTER_CLOSE') {
@@ -77,26 +77,23 @@ export class REPL {
     switch (command) {
       case '/quit':
       case '/exit':
-        console.log(chalk.gray('Goodbye!'));
+        this.view.displaySystemMessage('Goodbye!');
         this.rl.close();
         process.exit(0);
 
       case '/clear':
         await this.messageHistory.clear();
-        console.log(chalk.gray('Conversation history cleared.\n'));
+        this.view.displaySystemMessage('Conversation history cleared.\n');
         return true;
 
       case '/help':
-        console.log(chalk.gray('\nAvailable commands:'));
-        console.log(chalk.gray('  /quit or /exit - Exit the chat'));
-        console.log(chalk.gray('  /clear - Clear conversation history'));
-        console.log(chalk.gray('  /help - Show this help message\n'));
+        this.view.displayCommandHelp();
         return true;
 
       default:
         if (input.startsWith('/')) {
-          console.log(chalk.red(`Unknown command: ${input}`));
-          console.log(chalk.gray('Type /help for available commands.\n'));
+          this.view.displayError(`Unknown command: ${input}`);
+          this.view.displaySystemMessage('Type /help for available commands.\n');
           return true;
         }
         return false;

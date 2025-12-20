@@ -9,6 +9,7 @@ A simple terminal-based AI chat application that supports multiple providers inc
 - 💬 Conversation history within a session
 - 🔌 Support for multiple providers (Ollama and OpenRouter)
 - 💾 Pluggable storage backends (in-memory or Redis)
+- 🖥️ Pluggable output/view layer (stdout, future: SSE, File)
 - ⚙️ JSON-based configuration
 - 🐳 Docker support for Redis
 - 🎨 Colored terminal output
@@ -242,6 +243,9 @@ Available models can be found at [openrouter.ai/models](https://openrouter.ai/mo
 │   │   ├── MessageHistory.ts          # Abstract storage interface
 │   │   ├── InMemoryMessageHistory.ts  # In-memory implementation
 │   │   └── RedisMessageHistory.ts     # Redis implementation
+│   ├── output/
+│   │   ├── OutputView.ts    # Abstract output interface
+│   │   └── StdoutView.ts    # Terminal output implementation
 │   ├── config/
 │   │   └── manager.ts       # Configuration management
 │   ├── cli/

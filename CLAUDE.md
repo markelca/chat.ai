@@ -77,11 +77,32 @@ The config now includes an optional `redis` section with connection details. The
 - Supports session naming and TTL configuration
 - Environment variables take precedence over config file values
 
+### Output/View Abstraction
+The application abstracts output/display handling through the `OutputView` abstract class (`src/output/OutputView.ts`). This allows output to be directed to different destinations:
+
+- `StdoutView` - Default implementation, outputs to terminal with colors using chalk
+- Future: `SSEView` - Server-Sent Events for web interfaces
+- Future: `FileView` - Write conversation logs to files
+
+**OutputView Methods:**
+The abstraction provides fine-grained methods for different output types:
+- `displayWelcome()` - Startup message
+- `displayHelp()` / `displayCommandHelp()` - Help text
+- `displayPrompt()` - Prompt labels ("Assistant:")
+- `streamChunk()` - Individual token streaming (real-time)
+- `streamComplete()` - Newlines/spacing after streaming
+- `displayError()` / `displayWarning()` / `displayInfo()` - Status messages
+- `displaySystemMessage()` - App state changes (cleared, goodbye)
+
+**Output Selection:**
+The output backend is created in `src/index.ts:44` and passed to the REPL. Currently defaults to `StdoutView`. To use a different output backend, instantiate the desired `OutputView` implementation and pass it to the REPL constructor.
+
 ### REPL Interface
 The `REPL` class (`src/cli/repl.ts`) manages the interactive chat loop:
 - Uses Node.js `readline/promises` for user input
 - Streams responses token-by-token using async generators
 - Maintains conversation history via injected `MessageHistory` instance
+- Outputs via injected `OutputView` instance
 - Handles special commands (`/quit`, `/clear`, `/help`)
 
 The provider's `chat()` method receives the full message history on each request, allowing the AI to maintain context throughout the conversation.
@@ -127,11 +148,13 @@ This codebase follows a pattern of abstracting infrastructure decisions behind i
    - Message history storage: Redis, PostgreSQL, MongoDB, in-memory, filesystem, etc.
    - Session management: Database, Redis, JWT, etc.
    - When implementing: Present options with trade-offs (persistence, performance, complexity, dependencies)
+   - **Current abstraction**: `MessageHistory` (in-memory, Redis)
 
 2. **Output Mechanisms**
    - Chat streaming output: stdout (current), WebSocket, Server-Sent Events, HTTP polling, file output
    - Logging: console, file, external service
    - When implementing: Consider the use case and present appropriate options
+   - **Current abstraction**: `OutputView` (stdout only, designed for SSE and File)
 
 3. **Input/Interface Layers**
    - User input: readline (current), HTTP API, WebSocket, gRPC
