@@ -1,17 +1,20 @@
 import * as readline from 'readline/promises';
 import { stdin as input, stdout as output } from 'process';
 import chalk from 'chalk';
-import type { Provider, Message, ChatOptions } from '../providers/base.js';
+import type { Provider, ChatOptions } from '../providers/base.js';
+import { MessageHistory } from '../storage/MessageHistory.js';
+import { InMemoryMessageHistory } from '../storage/InMemoryMessageHistory.js';
 
 export class REPL {
   private provider: Provider;
-  private conversationHistory: Message[] = [];
+  private messageHistory: MessageHistory;
   private options?: ChatOptions;
   private rl: readline.Interface;
 
-  constructor(provider: Provider, options?: ChatOptions) {
+  constructor(provider: Provider, options?: ChatOptions, messageHistory?: MessageHistory) {
     this.provider = provider;
     this.options = options;
+    this.messageHistory = messageHistory ?? new InMemoryMessageHistory();
     this.rl = readline.createInterface({ input, output });
   }
 
@@ -34,7 +37,7 @@ export class REPL {
           continue;
         }
 
-        this.conversationHistory.push({
+        await this.messageHistory.add({
           role: 'user',
           content: userInput,
         });
@@ -44,14 +47,15 @@ export class REPL {
         let assistantResponse = '';
 
         try {
-          for await (const chunk of this.provider.chat(this.conversationHistory, this.options)) {
+          const messages = await this.messageHistory.getAll();
+          for await (const chunk of this.provider.chat(messages, this.options)) {
             process.stdout.write(chunk);
             assistantResponse += chunk;
           }
 
           process.stdout.write('\n\n');
 
-          this.conversationHistory.push({
+          await this.messageHistory.add({
             role: 'assistant',
             content: assistantResponse,
           });
@@ -78,7 +82,7 @@ export class REPL {
         process.exit(0);
 
       case '/clear':
-        this.conversationHistory = [];
+        await this.messageHistory.clear();
         console.log(chalk.gray('Conversation history cleared.\n'));
         return true;
 
