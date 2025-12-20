@@ -1,6 +1,7 @@
-import { createClient, RedisClientType } from 'redis';
-import { Message } from '../providers/base.js';
-import { MessageHistory } from './MessageHistory.js';
+import { createClient, RedisClientType } from "redis";
+import { Message } from "../providers/base.js";
+import { MessageHistory } from "./MessageHistory.js";
+import { RedisConfig } from "../config/manager.js";
 
 export interface RedisConnectionOptions {
   host?: string;
@@ -60,7 +61,7 @@ export class RedisMessageHistory extends MessageHistory {
     const redisOptions = options.redisOptions || {};
     this.redisClient = createClient({
       socket: {
-        host: redisOptions.host || 'localhost',
+        host: redisOptions.host || "localhost",
         port: redisOptions.port || 6379,
       },
       password: redisOptions.password,
@@ -68,8 +69,22 @@ export class RedisMessageHistory extends MessageHistory {
       database: redisOptions.database || 0,
     });
 
-    this.redisClient.on('error', (err) => {
-      console.error('Redis Client Error:', err);
+    this.redisClient.on("error", (err) => {
+      console.error("Redis Client Error:", err);
+    });
+  }
+
+  static fromRedisConfig(config: RedisConfig): RedisMessageHistory {
+    return new RedisMessageHistory({
+      sessionName: config.sessionName,
+      ttl: config.ttl,
+      redisOptions: {
+        host: config.host,
+        port: config.port,
+        password: config.password,
+        username: config.username,
+        database: config.database,
+      },
     });
   }
 
@@ -117,8 +132,12 @@ export class RedisMessageHistory extends MessageHistory {
    */
   async getAll(): Promise<Message[]> {
     await this.ensureConnected();
-    const serializedMessages = await this.redisClient.lRange(this.redisKey, 0, -1);
-    return serializedMessages.map(str => JSON.parse(str) as Message);
+    const serializedMessages = await this.redisClient.lRange(
+      this.redisKey,
+      0,
+      -1,
+    );
+    return serializedMessages.map((str) => JSON.parse(str) as Message);
   }
 
   /**

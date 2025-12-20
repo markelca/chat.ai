@@ -1,15 +1,15 @@
 #!/usr/bin/env node
 
-import { parseArguments } from './cli/parser.js';
-import { ConfigManager } from './config/manager.js';
-import { OllamaProvider } from './providers/ollama.js';
-import { OpenRouterProvider } from './providers/openrouter.js';
-import { REPL } from './cli/repl.js';
-import type { Provider, ChatOptions } from './providers/base.js';
-import { InMemoryMessageHistory } from './storage/InMemoryMessageHistory.js';
-import { RedisMessageHistory } from './storage/RedisMessageHistory.js';
-import type { MessageHistory } from './storage/MessageHistory.js';
-import { StdoutView } from './output/StdoutView.js';
+import { parseArguments } from "./cli/parser.js";
+import { ConfigManager } from "./config/manager.js";
+import { OllamaProvider } from "./providers/ollama.js";
+import { OpenRouterProvider } from "./providers/openrouter.js";
+import { REPL } from "./cli/repl.js";
+import type { Provider, ChatOptions } from "./providers/base.js";
+import { InMemoryMessageHistory } from "./storage/InMemoryMessageHistory.js";
+import { RedisMessageHistory } from "./storage/RedisMessageHistory.js";
+import type { MessageHistory } from "./storage/MessageHistory.js";
+import { StdoutView } from "./output/StdoutView.js";
 
 async function main() {
   try {
@@ -17,17 +17,18 @@ async function main() {
     const configManager = new ConfigManager();
     await configManager.load();
 
-    const providerName = cliOptions.provider || configManager.getDefaultProvider();
+    const providerName =
+      cliOptions.provider || configManager.getDefaultProvider();
     const providerConfig = configManager.getProviderConfig(providerName);
 
     let provider: Provider;
 
     switch (providerName) {
-      case 'ollama':
+      case "ollama":
         provider = new OllamaProvider(providerConfig);
         break;
 
-      case 'openrouter':
+      case "openrouter":
         provider = new OpenRouterProvider(providerConfig);
         break;
 
@@ -49,24 +50,14 @@ async function main() {
 
     if (redisConfig && redisConfig.enabled) {
       try {
-        view.displayInfo('Attempting to connect to Redis...');
-        messageHistory = new RedisMessageHistory({
-          sessionName: redisConfig.sessionName,
-          ttl: redisConfig.ttl,
-          redisOptions: {
-            host: redisConfig.host,
-            port: redisConfig.port,
-            password: redisConfig.password,
-            username: redisConfig.username,
-            database: redisConfig.database,
-          },
-        });
+        view.displayInfo("Attempting to connect to Redis...");
+        messageHistory = RedisMessageHistory.fromRedisConfig(redisConfig);
         // Test connection by trying to get all messages
         await messageHistory.getAll();
-        view.displayInfo('Connected to Redis successfully.\n');
+        view.displayInfo("Connected to Redis successfully.\n");
       } catch (error) {
         view.displayWarning(`Warning: Could not connect to Redis: ${error}`);
-        view.displayWarning('Falling back to in-memory storage.\n');
+        view.displayWarning("Falling back to in-memory storage.\n");
         messageHistory = new InMemoryMessageHistory();
       }
     } else {
