@@ -229,87 +229,11 @@ Alternatively, use environment variables without modifying config:
 REDIS_ENABLED=true REDIS_SESSION_NAME=my-session pnpm dev
 ```
 
-### Web Streaming (Real-time Browser View)
+## Web Streaming
 
 Stream your CLI conversation to a web browser in real-time using Server-Sent Events (SSE).
 
-#### Architecture
-
-The web streaming feature uses a dual-output architecture:
-- **CLI app** broadcasts output to both terminal (stdout) AND Redis pub/sub
-- **Web app** subscribes to Redis and streams to the browser via SSE
-- Messages flow: CLI → Redis pub/sub → Web app → Browser (SSE)
-
-#### Setup and Usage
-
-1. Enable web streaming in your `config.json`:
-```json
-{
-  "webStream": {
-    "enabled": true,
-    "redisChannel": "ai-chat:stream",
-    "redisHost": "localhost",
-    "redisPort": 6379
-  }
-}
-```
-
-2. Start Redis and the web app using Docker:
-```bash
-docker compose up -d
-```
-
-This starts:
-- Redis server on port 6379
-- Next.js web app on port 3000
-
-3. Run the CLI app with web streaming enabled:
-```bash
-# Using config.json
-pnpm dev
-
-# Or using environment variables
-WEB_STREAM_ENABLED=true pnpm dev
-```
-
-4. Open your browser to `http://localhost:3000` to view the live stream
-
-5. Start chatting in the terminal - you'll see messages appear in real-time in the browser!
-
-#### Web Streaming Configuration
-
-**CLI App (.env or config.json):**
-- `WEB_STREAM_ENABLED` - Enable/disable web streaming (default: `false`)
-- `WEB_STREAM_REDIS_CHANNEL` - Redis pub/sub channel name (default: `ai-chat:stream`)
-- `WEB_STREAM_REDIS_HOST` - Redis host (default: `localhost`)
-- `WEB_STREAM_REDIS_PORT` - Redis port (default: `6379`)
-- `WEB_STREAM_REDIS_PASSWORD` - Redis password (optional)
-
-**Web App (web/.env):**
-- `REDIS_HOST` - Redis server hostname
-- `REDIS_PORT` - Redis server port
-- `REDIS_PASSWORD` - Redis password (optional)
-- `REDIS_CHANNEL` - Redis pub/sub channel (must match CLI's `WEB_STREAM_REDIS_CHANNEL`)
-
-See `web/README.md` for more details on the web application.
-
-#### Features
-
-- **Read-only display**: Web UI is view-only (no input), terminal is for interaction
-- **Real-time streaming**: See AI responses as they're generated, character by character
-- **Connection status**: Visual indicator shows connection state
-- **Message types**: Different styling for prompts, responses, errors, info, warnings
-- **Auto-scroll**: Messages automatically scroll as they arrive
-- **Reconnection**: Automatically reconnects if connection is lost
-
-#### Architecture Details
-
-The web streaming implementation follows the project's abstraction philosophy:
-- **MessageSubscriber** abstract class allows different message brokers (currently Redis)
-- **CompositeView** pattern broadcasts to multiple outputs simultaneously
-- **OutputView** async interface supports network I/O for Redis publishing
-
-See `CLAUDE.md` for detailed architecture documentation.
+For setup instructions and configuration details, see the [Web Streaming guide](wiki/Web-Streaming.md).
 ## License
 
 ISC
