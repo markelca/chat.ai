@@ -114,6 +114,8 @@ You can also copy `config.example.json` to `config.json` and modify it:
 - **redis.username**: Redis username for ACL (optional, Redis 6+)
 - **redis.database**: Redis database number 0-15 (default: `0`)
 - **redis.sessionName**: Unique name for the conversation session (default: `default-session`)
+  - If set to `default-session` and no `REDIS_SESSION_NAME` env var, a unique session ID is auto-generated
+  - To use named sessions, either set a custom value in config or use `REDIS_SESSION_NAME` env var
 - **redis.ttl**: Time-to-live in seconds for conversation data (optional, no expiration if not set)
 
 #### Environment Variable Overrides

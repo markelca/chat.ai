@@ -170,6 +170,11 @@ export class ConfigManager {
     }
     if (process.env.REDIS_SESSION_NAME) {
       redisConfig.sessionName = process.env.REDIS_SESSION_NAME;
+    } else if (redisConfig.sessionName === 'default-session') {
+      // Generate unique session ID if using default
+      const timestamp = Date.now();
+      const random = Math.random().toString(36).substring(2, 8);
+      redisConfig.sessionName = `session-${timestamp}-${random}`;
     }
     if (process.env.REDIS_TTL) {
       redisConfig.ttl = parseInt(process.env.REDIS_TTL, 10);
