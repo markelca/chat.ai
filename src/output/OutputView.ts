@@ -1,62 +1,64 @@
 /**
  * Abstract interface for output/display handling.
  * Implementations can output to stdout, SSE, files, or other backends.
+ *
+ * All methods are async to support network I/O and other async operations.
  */
 export abstract class OutputView {
   /**
    * Display welcome message when the application starts.
    * @param providerName The name of the AI provider being used
    */
-  abstract displayWelcome(providerName: string): void;
+  abstract displayWelcome(providerName: string): Promise<void>;
 
   /**
    * Display help text showing available commands.
    */
-  abstract displayHelp(): void;
+  abstract displayHelp(): Promise<void>;
 
   /**
    * Display command help (for /help command).
    */
-  abstract displayCommandHelp(): void;
+  abstract displayCommandHelp(): Promise<void>;
 
   /**
    * Display a prompt label (e.g., "Assistant:").
    * @param promptText The prompt text to display
    */
-  abstract displayPrompt(promptText: string): void;
+  abstract displayPrompt(promptText: string): Promise<void>;
 
   /**
    * Stream a single chunk of text (token-by-token streaming).
    * @param chunk The text chunk to display
    */
-  abstract streamChunk(chunk: string): void;
+  abstract streamChunk(chunk: string): Promise<void>;
 
   /**
    * Called when streaming is complete (add spacing/newlines).
    */
-  abstract streamComplete(): void;
+  abstract streamComplete(): Promise<void>;
 
   /**
    * Display an error message.
    * @param error The error message to display
    */
-  abstract displayError(error: string): void;
+  abstract displayError(error: string): Promise<void>;
 
   /**
    * Display an informational message.
    * @param message The message to display
    */
-  abstract displayInfo(message: string): void;
+  abstract displayInfo(message: string): Promise<void>;
 
   /**
    * Display a warning message.
    * @param message The warning message to display
    */
-  abstract displayWarning(message: string): void;
+  abstract displayWarning(message: string): Promise<void>;
 
   /**
    * Display a system message (e.g., "Conversation history cleared", "Goodbye").
    * @param message The system message to display
    */
-  abstract displaySystemMessage(message: string): void;
+  abstract displaySystemMessage(message: string): Promise<void>;
 }

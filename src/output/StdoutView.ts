@@ -4,52 +4,54 @@ import { OutputView } from './OutputView.js';
 /**
  * Standard output implementation using console and process.stdout.
  * Uses chalk for colored terminal output.
+ *
+ * Methods are async for interface compatibility but execute synchronously internally.
  */
 export class StdoutView extends OutputView {
-  displayWelcome(providerName: string): void {
+  async displayWelcome(providerName: string): Promise<void> {
     console.log(chalk.bold.cyan(`\nAI Chat - ${providerName}`));
-    this.displayHelp();
+    await this.displayHelp();
   }
 
-  displayHelp(): void {
+  async displayHelp(): Promise<void> {
     console.log(chalk.gray('Type your message and press Enter. Special commands:'));
     console.log(chalk.gray('  /quit or /exit - Exit the chat'));
     console.log(chalk.gray('  /clear - Clear conversation history'));
     console.log(chalk.gray('  /help - Show this help message\n'));
   }
 
-  displayCommandHelp(): void {
+  async displayCommandHelp(): Promise<void> {
     console.log(chalk.gray('\nAvailable commands:'));
     console.log(chalk.gray('  /quit or /exit - Exit the chat'));
     console.log(chalk.gray('  /clear - Clear conversation history'));
     console.log(chalk.gray('  /help - Show this help message\n'));
   }
 
-  displayPrompt(promptText: string): void {
+  async displayPrompt(promptText: string): Promise<void> {
     process.stdout.write(chalk.blue(`${promptText}: `));
   }
 
-  streamChunk(chunk: string): void {
+  async streamChunk(chunk: string): Promise<void> {
     process.stdout.write(chunk);
   }
 
-  streamComplete(): void {
+  async streamComplete(): Promise<void> {
     process.stdout.write('\n\n');
   }
 
-  displayError(error: string): void {
+  async displayError(error: string): Promise<void> {
     console.error(chalk.red(`\n\nError: ${error}\n`));
   }
 
-  displayInfo(message: string): void {
+  async displayInfo(message: string): Promise<void> {
     console.log(message);
   }
 
-  displayWarning(message: string): void {
+  async displayWarning(message: string): Promise<void> {
     console.warn(message);
   }
 
-  displaySystemMessage(message: string): void {
+  async displaySystemMessage(message: string): Promise<void> {
     console.log(chalk.gray(message));
   }
 }

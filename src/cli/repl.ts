@@ -23,7 +23,7 @@ export class REPL {
   }
 
   async start(): Promise<void> {
-    this.view.displayWelcome(this.provider.name);
+    await this.view.displayWelcome(this.provider.name);
 
     while (true) {
       try {
@@ -42,25 +42,25 @@ export class REPL {
           content: userInput,
         });
 
-        this.view.displayPrompt('Assistant');
+        await this.view.displayPrompt('Assistant');
 
         let assistantResponse = '';
 
         try {
           const messages = await this.messageHistory.getAll();
           for await (const chunk of this.provider.chat(messages, this.options)) {
-            this.view.streamChunk(chunk);
+            await this.view.streamChunk(chunk);
             assistantResponse += chunk;
           }
 
-          this.view.streamComplete();
+          await this.view.streamComplete();
 
           await this.messageHistory.add({
             role: 'assistant',
             content: assistantResponse,
           });
         } catch (error) {
-          this.view.displayError(String(error));
+          await this.view.displayError(String(error));
         }
       } catch (error) {
         if ((error as any).code === 'ERR_USE_AFTER_CLOSE') {
@@ -77,23 +77,23 @@ export class REPL {
     switch (command) {
       case '/quit':
       case '/exit':
-        this.view.displaySystemMessage('Goodbye!');
+        await this.view.displaySystemMessage('Goodbye!');
         this.rl.close();
         process.exit(0);
 
       case '/clear':
         await this.messageHistory.clear();
-        this.view.displaySystemMessage('Conversation history cleared.\n');
+        await this.view.displaySystemMessage('Conversation history cleared.\n');
         return true;
 
       case '/help':
-        this.view.displayCommandHelp();
+        await this.view.displayCommandHelp();
         return true;
 
       default:
         if (input.startsWith('/')) {
-          this.view.displayError(`Unknown command: ${input}`);
-          this.view.displaySystemMessage('Type /help for available commands.\n');
+          await this.view.displayError(`Unknown command: ${input}`);
+          await this.view.displaySystemMessage('Type /help for available commands.\n');
           return true;
         }
         return false;

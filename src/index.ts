@@ -50,14 +50,14 @@ async function main() {
 
     if (redisConfig && redisConfig.enabled) {
       try {
-        view.displayInfo("Attempting to connect to Redis...");
+        await view.displayInfo("Attempting to connect to Redis...");
         messageHistory = RedisMessageHistory.fromRedisConfig(redisConfig);
         // Test connection by trying to get all messages
         await messageHistory.getAll();
-        view.displayInfo("Connected to Redis successfully.\n");
+        await view.displayInfo("Connected to Redis successfully.\n");
       } catch (error) {
-        view.displayWarning(`Warning: Could not connect to Redis: ${error}`);
-        view.displayWarning("Falling back to in-memory storage.\n");
+        await view.displayWarning(`Warning: Could not connect to Redis: ${error}`);
+        await view.displayWarning("Falling back to in-memory storage.\n");
         messageHistory = new InMemoryMessageHistory();
       }
     } else {
