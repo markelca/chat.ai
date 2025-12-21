@@ -75,6 +75,9 @@ export class RedisMessageHistory extends MessageHistory {
   }
 
   static fromRedisConfig(config: RedisConfig): RedisMessageHistory {
+    if (!config.sessionName) {
+      throw new Error('Redis config sessionName is required but was not generated');
+    }
     return new RedisMessageHistory({
       sessionName: config.sessionName,
       ttl: config.ttl,

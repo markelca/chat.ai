@@ -40,6 +40,7 @@ export class RedisSessionStore extends SessionStore {
   }
 
   static fromRedisConfig(config: RedisConfig): RedisSessionStore {
+    // Note: SessionStore doesn't need sessionName - it manages all sessions
     return new RedisSessionStore({
       ttl: config.ttl,
       host: config.host,

@@ -11,7 +11,7 @@ export interface RedisConfig {
   password?: string;
   username?: string;
   database?: number;
-  sessionName: string;
+  sessionName?: string;
   ttl?: number;
 }
 
@@ -47,7 +47,6 @@ const DEFAULT_CONFIG: Config = {
     enabled: false,
     host: 'localhost',
     port: 6379,
-    sessionName: 'default-session',
   },
   webStream: {
     enabled: false,
@@ -170,8 +169,8 @@ export class ConfigManager {
     }
     if (process.env.REDIS_SESSION_NAME) {
       redisConfig.sessionName = process.env.REDIS_SESSION_NAME;
-    } else if (redisConfig.sessionName === 'default-session') {
-      // Generate unique session ID if using default
+    } else if (!redisConfig.sessionName) {
+      // Generate unique session ID if not configured
       const timestamp = Date.now();
       const random = Math.random().toString(36).substring(2, 8);
       redisConfig.sessionName = `session-${timestamp}-${random}`;
