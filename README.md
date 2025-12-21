@@ -176,7 +176,7 @@ ai-chat -p ollama -m llama2 -s my-session
 
 #### Session Management
 
-The `--session` (or `-s`) flag allows you to create, resume, and manage multiple chat sessions. See the [Session Management guide](wiki/Session-Management.md) for detailed information.
+The `--session` (or `-s`) flag allows you to create, resume, and manage multiple chat sessions. See the [Session Management guide](https://github.com/markelca/chat.ai/wiki/Session-Management) for detailed information.
 
 ### REPL Commands
 
@@ -246,7 +246,7 @@ REDIS_ENABLED=true REDIS_SESSION_NAME=my-session pnpm dev
 
 Stream your CLI conversation to a web browser in real-time using Server-Sent Events (SSE).
 
-For setup instructions and configuration details, see the [Web Streaming guide](wiki/Web-Streaming.md).
+For setup instructions and configuration details, see the [Web Streaming guide](https://github.com/markelca/chat.ai/wiki/Web-Streaming).
 ## License
 
 ISC
