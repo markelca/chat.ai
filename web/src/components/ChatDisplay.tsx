@@ -10,17 +10,53 @@ interface ChatMessage {
   timestamp: number;
 }
 
-export function ChatDisplay() {
+interface ChatDisplayProps {
+  sessionName: string;
+}
+
+export function ChatDisplay({ sessionName }: ChatDisplayProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'disconnected'>('connecting');
   const [currentChunk, setCurrentChunk] = useState<string>('');
+  const [loadingHistory, setLoadingHistory] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const eventSourceRef = useRef<EventSource | null>(null);
   const isFinalizingRef = useRef<boolean>(false);
 
   useEffect(() => {
-    // Connect to SSE endpoint
-    const eventSource = new EventSource('/api/stream');
+    // Load historical messages first
+    const loadHistory = async () => {
+      setLoadingHistory(true);
+      setMessages([]);
+      setCurrentChunk('');
+
+      try {
+        const response = await fetch(`/api/sessions/${sessionName}/messages`);
+        if (!response.ok) {
+          throw new Error('Failed to load history');
+        }
+        const history = await response.json();
+
+        // Convert to ChatMessage format
+        const chatMessages: ChatMessage[] = history.map((msg: any, idx: number) => ({
+          id: `history-${msg.role}-${idx}`,
+          type: msg.role,
+          content: msg.content,
+          timestamp: Date.now() - (history.length - idx) * 1000, // Approximate timestamps
+        }));
+
+        setMessages(chatMessages);
+      } catch (error) {
+        console.error('[UI] Failed to load history:', error);
+      } finally {
+        setLoadingHistory(false);
+      }
+    };
+
+    loadHistory();
+
+    // Connect to session-specific SSE endpoint
+    const eventSource = new EventSource(`/api/stream?session=${sessionName}`);
     eventSourceRef.current = eventSource;
 
     eventSource.onopen = () => {
@@ -144,11 +180,11 @@ export function ChatDisplay() {
       }
     };
 
-    // Cleanup on unmount
+    // Cleanup on session change or unmount
     return () => {
       eventSource.close();
     };
-  }, []); // Empty dependency array - only connect once on mount
+  }, [sessionName]); // Reconnect when session changes
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -181,7 +217,10 @@ export function ChatDisplay() {
       {/* Header */}
       <header className="bg-gradient-to-r from-purple-600 to-blue-600 text-white p-4 shadow-lg">
         <div className="container mx-auto flex justify-between items-center">
-          <h1 className="text-2xl font-bold">AI Chat - Live Stream</h1>
+          <div>
+            <h1 className="text-2xl font-bold">AI Chat - Live Stream</h1>
+            <p className="text-xs text-purple-200 mt-1">{sessionName}</p>
+          </div>
           <div className="flex items-center gap-2">
             <div
               className={`w-3 h-3 rounded-full ${
@@ -200,14 +239,20 @@ export function ChatDisplay() {
       {/* Messages */}
       <main className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-900 p-4">
         <div className="container mx-auto max-w-4xl space-y-3">
-          {messages.length === 0 && !currentChunk && (
+          {loadingHistory ? (
             <div className="text-center text-gray-500 dark:text-gray-400 py-12">
-              <p className="text-lg">Waiting for messages...</p>
+              <div className="animate-pulse">
+                <p className="text-lg">Loading session history...</p>
+              </div>
+            </div>
+          ) : messages.length === 0 && !currentChunk ? (
+            <div className="text-center text-gray-500 dark:text-gray-400 py-12">
+              <p className="text-lg">No messages yet</p>
               <p className="text-sm mt-2">
                 Start a conversation in your terminal to see it streamed here.
               </p>
             </div>
-          )}
+          ) : null}
 
           {messages.map((message) => (
             <div

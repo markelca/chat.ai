@@ -1,5 +1,5 @@
-export { MessageHistory } from './MessageHistory.js';
-export { InMemoryMessageHistory } from './InMemoryMessageHistory.js';
-export { RedisMessageHistory, type RedisMessageHistoryOptions } from './RedisMessageHistory.js';
-export { SessionStore } from './SessionStore.js';
-export { RedisSessionStore, type RedisSessionStoreOptions } from './RedisSessionStore.js';
+export { MessageHistory } from './MessageHistory';
+export { InMemoryMessageHistory } from './InMemoryMessageHistory';
+export { RedisMessageHistory, type RedisMessageHistoryOptions } from './RedisMessageHistory';
+export { SessionStore } from './SessionStore';
+export { RedisSessionStore, type RedisSessionStoreOptions } from './RedisSessionStore';

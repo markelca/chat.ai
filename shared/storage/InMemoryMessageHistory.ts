@@ -1,5 +1,5 @@
-import { Message } from '../types/messages.js';
-import { MessageHistory } from './MessageHistory.js';
+import { Message } from '../types/messages';
+import { MessageHistory } from './MessageHistory';
 
 /**
  * In-memory implementation of MessageHistory.

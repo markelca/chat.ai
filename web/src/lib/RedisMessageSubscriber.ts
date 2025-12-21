@@ -79,13 +79,18 @@ export class RedisMessageSubscriber extends MessageSubscriber {
 
   /**
    * Static factory method to create RedisMessageSubscriber from environment variables.
+   * Accepts optional config override or sessionName for session-specific channels.
    */
-  static fromEnv(): RedisMessageSubscriber {
+  static fromEnv(options?: { configOverride?: Partial<RedisSubscriberConfig>; sessionName?: string }): RedisMessageSubscriber {
+    const baseChannel = process.env.REDIS_CHANNEL || 'ai-chat:stream';
+    const channel = options?.sessionName ? `${baseChannel}:${options.sessionName}` : baseChannel;
+
     const config: RedisSubscriberConfig = {
       host: process.env.REDIS_HOST || 'localhost',
       port: parseInt(process.env.REDIS_PORT || '6379', 10),
       password: process.env.REDIS_PASSWORD || undefined,
-      channel: process.env.REDIS_CHANNEL || 'ai-chat:stream',
+      channel,
+      ...options?.configOverride,
     };
 
     return new RedisMessageSubscriber(config);

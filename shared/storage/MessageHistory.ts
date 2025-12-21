@@ -1,4 +1,4 @@
-import { Message } from "../types/messages.js";
+import { Message } from "../types/messages";
 
 /**
  * Abstract interface for message history storage.

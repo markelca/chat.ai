@@ -6,9 +6,16 @@ export const dynamic = 'force-dynamic';
 /**
  * SSE endpoint that subscribes to message broker and streams messages to the browser.
  * Messages are sent in the standard SSE format: "data: {json}\n\n"
+ *
+ * Query Parameters:
+ * - session: Optional session name to subscribe to session-specific stream
  */
 export async function GET(request: Request) {
   const encoder = new TextEncoder();
+
+  // Extract session name from query params
+  const { searchParams } = new URL(request.url);
+  const sessionName = searchParams.get('session') || undefined;
 
   const stream = new ReadableStream({
     async start(controller) {
@@ -32,8 +39,8 @@ export async function GET(request: Request) {
         }
       };
 
-      // Create message subscriber from environment configuration
-      const subscriber = createSubscriber();
+      // Create message subscriber (session-specific if sessionName provided)
+      const subscriber = createSubscriber(sessionName);
 
       subscriber.onError((err) => {
         console.error('[SSE] Subscriber Error:', err);

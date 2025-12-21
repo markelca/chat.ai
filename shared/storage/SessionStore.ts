@@ -1,4 +1,4 @@
-import { SessionMetadata } from '../types/sessions.js';
+import { SessionMetadata } from '../types/sessions';
 
 /**
  * Abstract class for managing chat session metadata.

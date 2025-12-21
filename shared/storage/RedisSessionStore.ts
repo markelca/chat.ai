@@ -1,7 +1,7 @@
 import { createClient, RedisClientType } from 'redis';
-import { SessionStore } from './SessionStore.js';
-import { SessionMetadata } from '../types/sessions.js';
-import { RedisConfig } from '../../src/config/manager.js';
+import { SessionStore } from './SessionStore';
+import { SessionMetadata } from '../types/sessions';
+import { RedisConfig } from '../../src/config/manager';
 
 export interface RedisSessionStoreOptions {
   host?: string;
