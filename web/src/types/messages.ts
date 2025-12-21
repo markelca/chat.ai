@@ -1,27 +1,5 @@
 /**
- * Shared message types for CLI <-> Web communication via Redis pub/sub
- * These types match the OutputMessage types in the CLI app
+ * Re-export shared output types from the shared folder.
+ * This ensures CLI and web use the exact same type definitions.
  */
-
-export type MessageType =
-  | 'welcome'
-  | 'help'
-  | 'commandHelp'
-  | 'prompt'
-  | 'user'
-  | 'chunk'
-  | 'complete'
-  | 'error'
-  | 'info'
-  | 'warning'
-  | 'system';
-
-export interface OutputMessage {
-  type: MessageType;
-  payload: {
-    content?: string;
-    providerName?: string;
-    promptText?: string;
-  };
-  timestamp: number;
-}
+export type { MessageType, OutputMessage } from '../../../shared/types/output';

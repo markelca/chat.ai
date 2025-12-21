@@ -61,4 +61,8 @@ export class StdoutView extends OutputView {
   async displaySystemMessage(message: string): Promise<void> {
     console.log(chalk.gray(message));
   }
+
+  async displayClear(): Promise<void> {
+    // No-op for stdout - the clear message is already displayed via displaySystemMessage
+  }
 }

@@ -79,4 +79,10 @@ export class CompositeView extends OutputView {
       this.views.map(view => view.displaySystemMessage(message))
     );
   }
+
+  async displayClear(): Promise<void> {
+    await Promise.all(
+      this.views.map(view => view.displayClear())
+    );
+  }
 }

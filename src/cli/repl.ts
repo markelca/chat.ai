@@ -114,6 +114,14 @@ export class REPL {
 
       case "/clear":
         await this.messageHistory.clear();
+
+        // Reset session metadata
+        if (this.sessionStore && this.sessionName) {
+          await this.sessionStore.reset(this.sessionName);
+        }
+
+        // Notify all views (including web) that history was cleared
+        await this.view.displayClear();
         await this.view.displaySystemMessage("Conversation history cleared.\n");
         return true;
 

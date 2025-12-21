@@ -1,10 +1,12 @@
 /**
- * Message types for output/view communication.
- * Used for Redis pub/sub and SSE streaming.
+ * Shared message types for CLI <-> Web communication via Redis pub/sub.
+ * Used by both the CLI OutputView and the web app MessageSubscriber.
  */
+
 export type MessageType =
   | 'welcome'
   | 'help'
+  | 'commandHelp'
   | 'prompt'
   | 'user'
   | 'chunk'
@@ -13,7 +15,7 @@ export type MessageType =
   | 'info'
   | 'warning'
   | 'system'
-  | 'commandHelp';
+  | 'clear';
 
 /**
  * Output message format for serialization.

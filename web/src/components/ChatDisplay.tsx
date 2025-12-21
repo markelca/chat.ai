@@ -174,6 +174,13 @@ export function ChatDisplay({ sessionName }: ChatDisplayProps) {
           case 'commandHelp':
             // Skip help messages in web UI
             break;
+
+          case 'clear':
+            // Clear all messages when the user runs /clear in CLI
+            console.log('[UI] Clearing conversation history');
+            setMessages([]);
+            setCurrentChunk('');
+            break;
         }
       } catch (err) {
         console.error('[UI] Failed to parse message:', err);

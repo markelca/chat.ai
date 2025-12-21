@@ -25,4 +25,10 @@ export abstract class SessionStore {
    * Delete a session and its metadata.
    */
   abstract delete(sessionName: string): Promise<void>;
+
+  /**
+   * Reset session metadata (called when conversation history is cleared).
+   * Resets message count to 0 and updates lastMessage timestamp.
+   */
+  abstract reset(sessionName: string): Promise<void>;
 }

@@ -1,6 +1,6 @@
 import { createClient, RedisClientType } from "redis";
 import { OutputView } from "./OutputView.js";
-import type { OutputMessage } from "./types.js";
+import type { OutputMessage } from "../../shared/types/output.js";
 import { WebStreamConfig } from "../config/manager.js";
 
 export interface RedisPublisherOptions {
@@ -152,6 +152,14 @@ export class RedisPublisherView extends OutputView {
     await this.publish({
       type: "system",
       payload: { content: message },
+      timestamp: Date.now(),
+    });
+  }
+
+  async displayClear(): Promise<void> {
+    await this.publish({
+      type: "clear",
+      payload: {},
       timestamp: Date.now(),
     });
   }

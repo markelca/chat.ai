@@ -59,7 +59,9 @@ async function main() {
     // Add Redis publisher if web streaming is enabled
     const webStreamConfig = configManager.getWebStreamConfig();
     if (webStreamConfig && webStreamConfig.enabled) {
-      views.push(RedisPublisherView.fromWebStreamingConfig(webStreamConfig, sessionName));
+      views.push(
+        RedisPublisherView.fromWebStreamingConfig(webStreamConfig, sessionName),
+      );
     }
 
     const view = new CompositeView(views);
@@ -78,7 +80,8 @@ async function main() {
           sessionName: sessionName || redisConfig.sessionName,
         };
 
-        messageHistory = RedisMessageHistory.fromRedisConfig(effectiveRedisConfig);
+        messageHistory =
+          RedisMessageHistory.fromRedisConfig(effectiveRedisConfig);
         // Test connection by trying to get all messages
         await messageHistory.getAll();
 
@@ -86,7 +89,9 @@ async function main() {
         sessionStore = RedisSessionStore.fromRedisConfig(effectiveRedisConfig);
 
         await view.displayInfo("Connected to Redis successfully.");
-        await view.displayInfo(`Session: ${effectiveRedisConfig.sessionName}\n`);
+        await view.displayInfo(
+          `Session: ${effectiveRedisConfig.sessionName}\n`,
+        );
       } catch (error) {
         await view.displayWarning(
           `Warning: Could not connect to Redis: ${error}`,
@@ -99,7 +104,14 @@ async function main() {
       messageHistory = new InMemoryMessageHistory();
     }
 
-    const repl = new REPL(provider, chatOptions, messageHistory, view, sessionName, sessionStore);
+    const repl = new REPL(
+      provider,
+      chatOptions,
+      messageHistory,
+      view,
+      sessionName,
+      sessionStore,
+    );
     await repl.start();
   } catch (error) {
     console.error(`Error: ${error}`);

@@ -67,4 +67,10 @@ export abstract class OutputView {
    * @param message The system message to display
    */
   abstract displaySystemMessage(message: string): Promise<void>;
+
+  /**
+   * Signal that the conversation history has been cleared.
+   * This allows web clients to reset their display.
+   */
+  abstract displayClear(): Promise<void>;
 }
