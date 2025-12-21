@@ -7,10 +7,12 @@ A simple terminal-based AI chat application that supports multiple providers inc
 - 🚀 Simple REPL interface
 - 🔄 Streaming responses (display tokens as they arrive)
 - 💬 Conversation history within a session
+- 📋 **Session Management** - Create, resume, and navigate between multiple chat sessions
 - 🔌 Support for multiple providers (Ollama and OpenRouter)
 - 💾 Pluggable storage backends (in-memory or Redis)
 - 🖥️ Pluggable output/view layer (stdout, Redis pub/sub, composite)
 - 🌐 **Real-time web streaming** - View conversations in a web browser via SSE
+- 🎯 **Web UI with session navigation** - Browse all sessions with sidebar navigation
 - ⚙️ JSON-based configuration
 - 🐳 Docker support for Redis and web app
 - 🎨 Colored terminal output
@@ -161,9 +163,20 @@ ai-chat --provider openrouter
 ai-chat --provider ollama --model codellama
 ai-chat --provider openrouter --model anthropic/claude-3-opus
 
+# Resume or create a named session
+ai-chat --session my-project
+ai-chat --session frontend-work
+
+# Combine options
+ai-chat -p ollama -m llama2 -s research
+
 # Short options
-ai-chat -p ollama -m llama2
+ai-chat -p ollama -m llama2 -s my-session
 ```
+
+#### Session Management
+
+The `--session` (or `-s`) flag allows you to create, resume, and manage multiple chat sessions. See the [Session Management guide](wiki/Session-Management.md) for detailed information.
 
 ### REPL Commands
 

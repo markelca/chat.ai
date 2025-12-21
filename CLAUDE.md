@@ -29,6 +29,25 @@ Example: "I've added the redis dependency to package.json. Please run `pnpm inst
 
 ## Architecture Overview
 
+### Shared Abstractions
+The `/shared` directory contains storage abstractions used by both the CLI and web app:
+
+**Message Storage:**
+- `MessageHistory` - Abstract class for conversation history
+- `RedisMessageHistory` - Redis List implementation
+- `InMemoryMessageHistory` - Non-persistent implementation
+
+**Session Metadata:**
+- `SessionStore` - Abstract class for session management
+- `RedisSessionStore` - Redis Hash implementation
+- Stores session name, message count, timestamps for web UI listing
+
+**Shared Types:**
+- `Message` - Chat message structure (`shared/types/messages.ts`)
+- `SessionMetadata` - Session information (`shared/types/sessions.ts`)
+
+Both CLI (`src/`) and web app (`web/src/`) import from `/shared`, ensuring consistent behavior across platforms.
+
 ### Provider Pattern
 The application uses a pluggable provider system for AI chat backends. All providers must implement the `Provider` interface from `src/providers/base.ts`:
 - `chat()` - Returns an async generator for streaming responses
