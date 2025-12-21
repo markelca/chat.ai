@@ -1,7 +1,7 @@
 import { createClient, RedisClientType } from "redis";
-import { Message } from "../providers/base.js";
+import { Message } from "../types/messages.js";
 import { MessageHistory } from "./MessageHistory.js";
-import { RedisConfig } from "../config/manager.js";
+import { RedisConfig } from "../../src/config/manager.js";
 
 export interface RedisConnectionOptions {
   host?: string;

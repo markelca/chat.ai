@@ -1,7 +1,5 @@
-export interface Message {
-  role: 'user' | 'assistant' | 'system';
-  content: string;
-}
+// Re-export Message from shared types
+export type { Message } from '../../shared/types/messages.js';
 
 export interface ChatOptions {
   model?: string;

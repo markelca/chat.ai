@@ -8,6 +8,7 @@ export interface RedisPublisherOptions {
   port?: number;
   password?: string;
   channel?: string;
+  sessionName?: string;
 }
 
 /**
@@ -21,7 +22,10 @@ export class RedisPublisherView extends OutputView {
 
   constructor(options: RedisPublisherOptions = {}) {
     super();
-    this.channel = options.channel || "ai-chat:stream";
+    const baseChannel = options.channel || "ai-chat:stream";
+    this.channel = options.sessionName
+      ? `${baseChannel}:${options.sessionName}`
+      : baseChannel;
 
     this.redisClient = createClient({
       socket: {
@@ -36,12 +40,13 @@ export class RedisPublisherView extends OutputView {
     });
   }
 
-  static fromWebStreamingConfig(config: WebStreamConfig): RedisPublisherView {
+  static fromWebStreamingConfig(config: WebStreamConfig, sessionName?: string): RedisPublisherView {
     return new RedisPublisherView({
       channel: config.redisChannel,
       host: config.redisHost,
       port: config.redisPort,
       password: config.redisPassword,
+      sessionName,
     });
   }
 

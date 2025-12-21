@@ -2,8 +2,9 @@ import * as readline from "readline/promises";
 import { stdin as input, stdout as output } from "process";
 import chalk from "chalk";
 import type { Provider, ChatOptions } from "../providers/base.js";
-import { MessageHistory } from "../storage/MessageHistory.js";
-import { InMemoryMessageHistory } from "../storage/InMemoryMessageHistory.js";
+import { MessageHistory } from "../../shared/storage/MessageHistory.js";
+import { InMemoryMessageHistory } from "../../shared/storage/InMemoryMessageHistory.js";
+import { SessionStore } from "../../shared/storage/SessionStore.js";
 import { OutputView } from "../output/OutputView.js";
 import { StdoutView } from "../output/StdoutView.js";
 
@@ -13,17 +14,23 @@ export class REPL {
   private view: OutputView;
   private options?: ChatOptions;
   private rl: readline.Interface;
+  private sessionName?: string;
+  private sessionStore: SessionStore | null;
 
   constructor(
     provider: Provider,
     options?: ChatOptions,
     messageHistory?: MessageHistory,
     view?: OutputView,
+    sessionName?: string,
+    sessionStore?: SessionStore | null,
   ) {
     this.provider = provider;
     this.options = options;
     this.messageHistory = messageHistory ?? new InMemoryMessageHistory();
     this.view = view ?? new StdoutView();
+    this.sessionName = sessionName;
+    this.sessionStore = sessionStore ?? null;
     this.rl = readline.createInterface({ input, output });
   }
 
@@ -47,6 +54,13 @@ export class REPL {
           content: userInput,
         });
 
+        // Update session metadata
+        if (this.sessionStore && this.sessionName) {
+          await this.sessionStore.update(this.sessionName, {
+            lastMessage: Date.now(),
+          });
+        }
+
         await this.view.displayUserMessage(userInput);
 
         await this.view.displayPrompt("Assistant");
@@ -69,6 +83,13 @@ export class REPL {
             role: "assistant",
             content: assistantResponse,
           });
+
+          // Update session metadata
+          if (this.sessionStore && this.sessionName) {
+            await this.sessionStore.update(this.sessionName, {
+              lastMessage: Date.now(),
+            });
+          }
         } catch (error) {
           await this.view.displayError(String(error));
         }
