@@ -3,6 +3,7 @@ import { Command } from 'commander';
 export interface CliOptions {
   provider?: 'ollama' | 'openrouter';
   model?: string;
+  session?: string;
 }
 
 export function parseArguments(): CliOptions {
@@ -14,6 +15,7 @@ export function parseArguments(): CliOptions {
     .version('1.0.0')
     .option('-p, --provider <provider>', 'AI provider to use (ollama or openrouter)')
     .option('-m, --model <model>', 'Model to use (overrides config default)')
+    .option('-s, --session <name>', 'Session name to resume or create (overrides config)')
     .parse(process.argv);
 
   const options = program.opts<CliOptions>();

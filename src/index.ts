@@ -53,7 +53,8 @@ async function main() {
 
     // Get Redis config for session name (needed for web streaming)
     const redisConfig = configManager.getRedisConfig();
-    const sessionName = redisConfig?.sessionName;
+    // CLI flag overrides config session name
+    const sessionName = cliOptions.session || redisConfig?.sessionName;
 
     // Add Redis publisher if web streaming is enabled
     const webStreamConfig = configManager.getWebStreamConfig();
@@ -70,14 +71,22 @@ async function main() {
     if (redisConfig && redisConfig.enabled) {
       try {
         await view.displayInfo("Attempting to connect to Redis...");
-        messageHistory = RedisMessageHistory.fromRedisConfig(redisConfig);
+
+        // Override session name in config if provided via CLI
+        const effectiveRedisConfig = {
+          ...redisConfig,
+          sessionName: sessionName || redisConfig.sessionName,
+        };
+
+        messageHistory = RedisMessageHistory.fromRedisConfig(effectiveRedisConfig);
         // Test connection by trying to get all messages
         await messageHistory.getAll();
 
         // Create session store for metadata
-        sessionStore = RedisSessionStore.fromRedisConfig(redisConfig);
+        sessionStore = RedisSessionStore.fromRedisConfig(effectiveRedisConfig);
 
-        await view.displayInfo("Connected to Redis successfully.\n");
+        await view.displayInfo("Connected to Redis successfully.");
+        await view.displayInfo(`Session: ${effectiveRedisConfig.sessionName}\n`);
       } catch (error) {
         await view.displayWarning(
           `Warning: Could not connect to Redis: ${error}`,
