@@ -18,6 +18,7 @@ export function ChatDisplay({ sessionName }: ChatDisplayProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'disconnected'>('connecting');
   const [currentChunk, setCurrentChunk] = useState<string>('');
+  const currentChunkRef = useRef<string>('');
   const [loadingHistory, setLoadingHistory] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const eventSourceRef = useRef<EventSource | null>(null);
@@ -105,43 +106,33 @@ export function ChatDisplay({ sessionName }: ChatDisplayProps) {
 
           case 'chunk':
             // Accumulate chunks for the current response
-            setCurrentChunk((prev) => prev + (message.payload.content || ''));
+            setCurrentChunk((prev) => {
+              const next = prev + (message.payload.content || '');
+              currentChunkRef.current = next; // Keep ref in sync
+              return next;
+            });
             break;
 
           case 'complete':
             // Finalize the current response
             console.log('[UI] Complete received, current chunk length:', currentChunk.length);
-            setCurrentChunk((prev) => {
-              console.log('[UI] Finalizing chunk, length:', prev.length);
-              if (prev) {
+            const finalContent = currentChunkRef.current;
+              if (finalContent) {
                 const assistantMessageId = `assistant-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
                 setMessages((msgs) => {
-                  // TODO: This is a workaround for React Strict Mode duplicates
-                  // Need to find a better solution to prevent duplicate processing
-                  const isDuplicate = msgs.some(
-                    (m) => m.type === 'assistant' && m.content === prev &&
-                    Math.abs(m.timestamp - message.timestamp) < 100
-                  );
-
-                  if (isDuplicate) {
-                    console.log('[UI] Duplicate message detected, skipping (WORKAROUND)');
-                    return msgs;
-                  }
-
                   console.log('[UI] Adding assistant message to list with id:', assistantMessageId);
                   return [
                     ...msgs,
                     {
                       id: assistantMessageId,
                       type: 'assistant',
-                      content: prev,
+                      content: finalContent,
                       timestamp: message.timestamp,
                     },
                   ];
                 });
+              setCurrentChunk('') // Reset chunk for next response
               }
-              return ''; // Reset chunk for next response
-            });
             break;
 
           case 'error':
