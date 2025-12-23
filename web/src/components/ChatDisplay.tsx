@@ -18,7 +18,7 @@ export function ChatDisplay({ sessionName }: ChatDisplayProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'disconnected'>('connecting');
   const [currentChunk, setCurrentChunk] = useState<string>('');
-  const currentChunkRef2 = useRef<string>('');
+  const currentChunkRef = useRef<string>('');
   const [loadingHistory, setLoadingHistory] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const eventSourceRef = useRef<EventSource | null>(null);
@@ -108,7 +108,7 @@ export function ChatDisplay({ sessionName }: ChatDisplayProps) {
             // Accumulate chunks for the current response
             setCurrentChunk((prev) => {
               const next = prev + (message.payload.content || '');
-              currentChunkRef2.current = next; // Keep ref in sync
+              currentChunkRef.current = next; // Keep ref in sync
               return next;
             });
             break;
@@ -116,7 +116,7 @@ export function ChatDisplay({ sessionName }: ChatDisplayProps) {
           case 'complete':
             // Finalize the current response
             console.log('[UI] Complete received, current chunk length:', currentChunk.length);
-            const finalContent = currentChunkRef2.current;
+            const finalContent = currentChunkRef.current;
               if (finalContent) {
                 const assistantMessageId = `assistant-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
                 setMessages((msgs) => {
