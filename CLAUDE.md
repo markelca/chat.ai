@@ -2,20 +2,41 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Monorepo Structure
+
+This project uses pnpm workspaces for monorepo management:
+
+```
+/
+├── packages/
+│   ├── cli/          # Terminal application
+│   ├── web/          # Next.js web app
+│   └── shared/       # Shared types and storage abstractions
+├── pnpm-workspace.yaml
+└── package.json      # Root workspace configuration
+```
+
 ## Build and Development Commands
 
 ```bash
-# Development mode with hot-reload
-pnpm dev
+# Install all dependencies (from root)
+pnpm install
 
-# Build TypeScript to JavaScript
+# Development mode - CLI
+pnpm dev:cli
+
+# Development mode - Web
+pnpm dev:web
+
+# Build all packages
 pnpm build
 
-# Run compiled application
-pnpm start
+# Build specific package
+pnpm build:cli
+pnpm build:web
 
-# Link globally for system-wide usage
-pnpm link --global
+# Link CLI globally for system-wide usage
+cd packages/cli && pnpm link --global
 ```
 
 **IMPORTANT - Token Conservation:**
@@ -29,8 +50,8 @@ Example: "I've added the redis dependency to package.json. Please run `pnpm inst
 
 ## Architecture Overview
 
-### Shared Abstractions
-The `/shared` directory contains storage abstractions used by both the CLI and web app:
+### Shared Package (@ai-chat/shared)
+The `packages/shared/` package contains storage abstractions and types used by both the CLI and web app:
 
 **Message Storage:**
 - `MessageHistory` - Abstract class for conversation history
@@ -46,10 +67,10 @@ The `/shared` directory contains storage abstractions used by both the CLI and w
 - `Message` - Chat message structure (`shared/types/messages.ts`)
 - `SessionMetadata` - Session information (`shared/types/sessions.ts`)
 
-Both CLI (`src/`) and web app (`web/src/`) import from `/shared`, ensuring consistent behavior across platforms.
+Both CLI and web packages import from `@ai-chat/shared` using pnpm workspace linking, ensuring consistent behavior and single source of truth for dependencies.
 
 ### Provider Pattern
-The application uses a pluggable provider system for AI chat backends. All providers must implement the `Provider` interface from `src/providers/base.ts`:
+The application uses a pluggable provider system for AI chat backends. All providers must implement the `Provider` interface from `packages/cli/src/providers/base.ts`:
 - `chat()` - Returns an async generator for streaming responses
 - `listModels()` - Optional method to list available models
 
@@ -57,7 +78,7 @@ Current providers:
 - `OllamaProvider` - Local AI models via Ollama API
 - `OpenRouterProvider` - Cloud AI models via OpenRouter API
 
-To add a new provider, implement the `Provider` interface and register it in the switch statement in `src/index.ts:21-32`.
+To add a new provider, implement the `Provider` interface and register it in the switch statement in `packages/cli/src/index.ts`.
 
 ### Message History Storage Abstraction
 The application abstracts message history storage through the `MessageHistory` abstract class (`src/storage/MessageHistory.ts`). This allows conversation history to be stored in different backends:
@@ -251,10 +272,10 @@ This codebase follows a pattern of abstracting infrastructure decisions behind i
 
 | Abstraction | Location | Implementations | Pattern |
 |-------------|----------|-----------------|---------|
-| MessageHistory | `src/storage/` | InMemory, Redis | Abstract class + factory methods |
-| OutputView | `src/output/` | Stdout, RedisPublisher, Composite | Abstract async class + composite |
-| MessageSubscriber | `web/src/lib/` | RedisMessageSubscriber | Abstract class + factory function |
-| Provider | `src/providers/` | Ollama, OpenRouter | Interface + async generators |
+| MessageHistory | `packages/shared/storage/` | InMemory, Redis | Abstract class + factory methods |
+| OutputView | `packages/cli/src/output/` | Stdout, RedisPublisher, Composite | Abstract async class + composite |
+| MessageSubscriber | `packages/web/src/lib/` | RedisMessageSubscriber | Abstract class + factory function |
+| Provider | `packages/cli/src/providers/` | Ollama, OpenRouter | Interface + async generators |
 
 ### Guidance for Implementation:
 

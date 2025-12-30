@@ -1,7 +1,7 @@
-import { SessionStore } from '@shared/storage/SessionStore';
-import { RedisSessionStore } from '@shared/storage/RedisSessionStore';
-import { MessageHistory } from '@shared/storage/MessageHistory';
-import { RedisMessageHistory } from '@shared/storage/RedisMessageHistory';
+import { SessionStore } from '@ai-chat/shared/storage/SessionStore';
+import { RedisSessionStore } from '@ai-chat/shared/storage/RedisSessionStore';
+import { MessageHistory } from '@ai-chat/shared/storage/MessageHistory';
+import { RedisMessageHistory } from '@ai-chat/shared/storage/RedisMessageHistory';
 
 export function createSessionStore(): SessionStore {
   return new RedisSessionStore({

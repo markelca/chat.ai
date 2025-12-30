@@ -2,9 +2,9 @@ import * as readline from "readline/promises";
 import { stdin as input, stdout as output } from "process";
 import chalk from "chalk";
 import type { Provider, ChatOptions } from "../providers/base.js";
-import { MessageHistory } from "../../shared/storage/MessageHistory.js";
-import { InMemoryMessageHistory } from "../../shared/storage/InMemoryMessageHistory.js";
-import { SessionStore } from "../../shared/storage/SessionStore.js";
+import { MessageHistory } from "@ai-chat/shared/storage/MessageHistory.js";
+import { InMemoryMessageHistory } from "@ai-chat/shared/storage/InMemoryMessageHistory.js";
+import { SessionStore } from "@ai-chat/shared/storage/SessionStore.js";
 import { OutputView } from "../output/OutputView.js";
 import { StdoutView } from "../output/StdoutView.js";
 
