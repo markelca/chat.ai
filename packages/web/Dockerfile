@@ -14,23 +14,42 @@ COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
 COPY packages/shared/package.json ./packages/shared/
 COPY packages/web/package.json ./packages/web/
 
-# Install dependencies (pnpm will handle workspace linking)
+# Install all dependencies for the entire workspace
+# This installs deps in node_modules/.pnpm and creates symlinks
 RUN pnpm install --frozen-lockfile
+
+# Debug: Check pnpm store structure
+RUN echo "=== Checking pnpm store ===" && \
+    ls -la node_modules/.pnpm/ | head -20 && \
+    echo "=== Checking shared package node_modules ===" && \
+    ls -la packages/shared/node_modules/ && \
+    echo "=== Checking if redis exists in .pnpm store ===" && \
+    ls -la node_modules/.pnpm/redis*/node_modules/redis 2>/dev/null || echo "Redis not found in .pnpm store"
 
 # Build the application
 FROM base AS builder
 WORKDIR /app
 
-# Copy workspace config and dependencies
-COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/packages ./packages
+# Copy workspace config
 COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
 
-# Copy shared source code
-COPY packages/shared ./packages/shared
+# CRITICAL: Copy the entire node_modules directory including .pnpm store
+# This preserves pnpm's symlink structure
+COPY --from=deps /app/node_modules ./node_modules
 
-# Copy web source code
+# Copy package directories with their node_modules (contains symlinks to .pnpm)
+COPY --from=deps /app/packages/shared ./packages/shared
+COPY --from=deps /app/packages/web ./packages/web
+
+# Now copy source code (will overwrite package.json but preserve node_modules)
+COPY packages/shared ./packages/shared
 COPY packages/web ./packages/web
+
+# Verify the symlink structure is intact
+RUN echo "=== Verifying redis module access ===" && \
+    ls -la packages/shared/node_modules/redis && \
+    echo "=== Testing redis require ===" && \
+    cd packages/shared && node -e "require('redis'); console.log('Redis accessible from shared!');"
 
 # Build the web app
 WORKDIR /app/packages/web
