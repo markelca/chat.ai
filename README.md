@@ -2,6 +2,13 @@
 
 A simple terminal-based AI chat application that supports multiple providers including Ollama and OpenRouter with streaming response support.
 
+## Project Structure
+
+This is a monorepo managed with pnpm workspaces:
+- **packages/cli** - Terminal application
+- **packages/web** - Next.js web interface
+- **packages/shared** - Shared types and storage abstractions
+
 ## Features
 
 - 🚀 Simple REPL interface
@@ -28,14 +35,20 @@ A simple terminal-based AI chat application that supports multiple providers inc
 
 1. Clone the repository or download the source code
 
-2. Install dependencies:
+2. Install dependencies for all packages:
 ```bash
 pnpm install
 ```
 
-3. Build the project:
+3. Build all packages:
 ```bash
 pnpm build
+```
+
+Or build specific packages:
+```bash
+pnpm build:cli
+pnpm build:web
 ```
 
 ## Docker Setup
@@ -131,23 +144,31 @@ See `.env.example` for a complete list with descriptions.
 
 ### Development Mode
 
-Run the application in development mode with hot-reload:
+Run the CLI in development mode with hot-reload:
 
 ```bash
-pnpm dev
+pnpm dev:cli
+```
+
+Run the web app:
+
+```bash
+pnpm dev:web
 ```
 
 ### Production Mode
 
-After building, run the compiled application:
+After building, run the CLI:
 
 ```bash
+cd packages/cli
 pnpm start
 ```
 
-Or use it globally after linking:
+Or link the CLI globally:
 
 ```bash
+cd packages/cli
 pnpm link --global
 ai-chat
 ```
@@ -230,16 +251,16 @@ docker compose up -d
 }
 ```
 
-3. Run the application:
+3. Run the CLI:
 ```bash
-pnpm dev
+pnpm dev:cli
 ```
 
 Your conversation history will now persist in Redis. Stop and restart the application to see your history restored.
 
 Alternatively, use environment variables without modifying config:
 ```bash
-REDIS_ENABLED=true REDIS_SESSION_NAME=my-session pnpm dev
+REDIS_ENABLED=true REDIS_SESSION_NAME=my-session pnpm dev:cli
 ```
 
 ## Web Streaming
