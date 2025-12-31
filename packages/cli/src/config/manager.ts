@@ -3,7 +3,7 @@ import { existsSync } from 'fs';
 import { homedir } from 'os';
 import { join } from 'path';
 import type { ProviderConfig } from '../providers/base.js';
-import type { RedisConfig } from '@ai-chat/shared/types/config.js';
+import type { RedisConfig } from '@ai-chat/shared/types/config';
 
 export interface WebStreamConfig {
   enabled: boolean;
