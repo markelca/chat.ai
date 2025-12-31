@@ -6,7 +6,8 @@
   "main": "index.ts",
   "exports": {
     "./storage/*": "./storage/*.ts",
-    "./types/*": "./types/*.ts"
+    "./types/*": "./types/*.ts",
+    "./types/config": "./types/config.ts"
   },
   "dependencies": {
     "redis": "^4.7.0"

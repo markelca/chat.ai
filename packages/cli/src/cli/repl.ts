@@ -1,12 +1,12 @@
 import * as readline from "readline/promises";
 import { stdin as input, stdout as output } from "process";
 import chalk from "chalk";
-import type { Provider, ChatOptions } from "../providers/base.js";
-import { MessageHistory } from "@ai-chat/shared/storage/MessageHistory.js";
-import { InMemoryMessageHistory } from "@ai-chat/shared/storage/InMemoryMessageHistory.js";
-import { SessionStore } from "@ai-chat/shared/storage/SessionStore.js";
-import { OutputView } from "../output/OutputView.js";
-import { StdoutView } from "../output/StdoutView.js";
+import type { Provider, ChatOptions } from "../providers/base";
+import { MessageHistory } from "@ai-chat/shared/storage/MessageHistory";
+import { InMemoryMessageHistory } from "@ai-chat/shared/storage/InMemoryMessageHistory";
+import { SessionStore } from "@ai-chat/shared/storage/SessionStore";
+import { OutputView } from "../output/OutputView";
+import { StdoutView } from "../output/StdoutView";
 
 export class REPL {
   private provider: Provider;

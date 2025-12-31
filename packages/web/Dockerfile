@@ -18,14 +18,6 @@ COPY packages/web/package.json ./packages/web/
 # This installs deps in node_modules/.pnpm and creates symlinks
 RUN pnpm install --frozen-lockfile
 
-# Debug: Check pnpm store structure
-RUN echo "=== Checking pnpm store ===" && \
-    ls -la node_modules/.pnpm/ | head -20 && \
-    echo "=== Checking shared package node_modules ===" && \
-    ls -la packages/shared/node_modules/ && \
-    echo "=== Checking if redis exists in .pnpm store ===" && \
-    ls -la node_modules/.pnpm/redis*/node_modules/redis 2>/dev/null || echo "Redis not found in .pnpm store"
-
 # Build the application
 FROM base AS builder
 WORKDIR /app
@@ -45,12 +37,6 @@ COPY --from=deps /app/packages/web ./packages/web
 COPY packages/shared ./packages/shared
 COPY packages/web ./packages/web
 
-# Verify the symlink structure is intact
-RUN echo "=== Verifying redis module access ===" && \
-    ls -la packages/shared/node_modules/redis && \
-    echo "=== Testing redis require ===" && \
-    cd packages/shared && node -e "require('redis'); console.log('Redis accessible from shared!');"
-
 # Build the web app
 WORKDIR /app/packages/web
 RUN pnpm build
@@ -64,12 +50,14 @@ ENV NODE_ENV=production
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
-# Copy public assets
-COPY --from=builder /app/packages/web/public ./public
-
-# Copy standalone build
+# Copy standalone build (includes full monorepo structure)
 COPY --from=builder --chown=nextjs:nodejs /app/packages/web/.next/standalone ./
+
+# Copy static files to the correct location within standalone structure
 COPY --from=builder --chown=nextjs:nodejs /app/packages/web/.next/static ./packages/web/.next/static
+
+# Copy public directory to the correct location
+COPY --from=builder --chown=nextjs:nodejs /app/packages/web/public ./packages/web/public
 
 USER nextjs
 

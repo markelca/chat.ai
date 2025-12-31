@@ -1,7 +1,7 @@
 import { createClient, RedisClientType } from "redis";
 import { SessionStore } from "./SessionStore";
 import { SessionMetadata } from "../types/sessions";
-import { RedisConfig } from "../../src/config/manager";
+import { RedisConfig } from "../types/config";
 
 export interface RedisSessionStoreOptions {
   host?: string;

@@ -1,6 +1,6 @@
 import { createClient, RedisClientType } from "redis";
 import { OutputView } from "./OutputView.js";
-import type { OutputMessage } from "@ai-chat/shared/types/output.js";
+import type { OutputMessage } from "@ai-chat/shared/types/output";
 import { WebStreamConfig } from "../config/manager.js";
 
 export interface RedisPublisherOptions {
@@ -40,7 +40,10 @@ export class RedisPublisherView extends OutputView {
     });
   }
 
-  static fromWebStreamingConfig(config: WebStreamConfig, sessionName?: string): RedisPublisherView {
+  static fromWebStreamingConfig(
+    config: WebStreamConfig,
+    sessionName?: string,
+  ): RedisPublisherView {
     return new RedisPublisherView({
       channel: config.redisChannel,
       host: config.redisHost,
