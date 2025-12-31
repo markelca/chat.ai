@@ -1,6 +1,6 @@
 import { createClient, RedisClientType } from "redis";
 import { OutputView } from "./OutputView.js";
-import type { OutputMessage } from "../../shared/types/output.js";
+import type { OutputMessage } from "@ai-chat/shared/types/output.js";
 import { WebStreamConfig } from "../config/manager.js";
 
 export interface RedisPublisherOptions {

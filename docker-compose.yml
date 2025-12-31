@@ -16,7 +16,9 @@ services:
       retries: 3
 
   web:
-    build: ./web
+    build:
+      context: .
+      dockerfile: packages/web/Dockerfile
     container_name: ai-chat-web
     ports:
       - "3000:3000"
