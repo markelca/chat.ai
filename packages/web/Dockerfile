@@ -55,6 +55,16 @@ RUN echo "=== Verifying redis module access ===" && \
 WORKDIR /app/packages/web
 RUN pnpm build
 
+# Debug: Check standalone output structure
+RUN echo "=== Checking standalone structure ===" && \
+    ls -la .next/standalone/ && \
+    echo "=== Looking for server.js ===" && \
+    find .next/standalone -name "server.js" -type f && \
+    echo "=== Checking standalone node_modules ===" && \
+    ls -la .next/standalone/node_modules/ 2>/dev/null | head -20 && \
+    echo "=== Checking for next in standalone ===" && \
+    ls -la .next/standalone/node_modules/next 2>/dev/null || echo "next not found in standalone node_modules"
+
 # Production image
 FROM base AS runner
 WORKDIR /app
@@ -64,12 +74,27 @@ ENV NODE_ENV=production
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
-# Copy public assets
-COPY --from=builder /app/packages/web/public ./public
-
-# Copy standalone build
+# Copy standalone build (includes full monorepo structure)
 COPY --from=builder --chown=nextjs:nodejs /app/packages/web/.next/standalone ./
+
+# Copy static files to the correct location within standalone structure
 COPY --from=builder --chown=nextjs:nodejs /app/packages/web/.next/static ./packages/web/.next/static
+
+# Copy public directory to the correct location
+COPY --from=builder --chown=nextjs:nodejs /app/packages/web/public ./packages/web/public
+
+# Debug: List structure to verify paths
+RUN ls -la . && \
+    echo "=== Checking for server.js ===" && \
+    find . -name "server.js" -type f 2>/dev/null | head -5 && \
+    echo "=== Checking packages structure ===" && \
+    ls -la packages/ 2>/dev/null || echo "No packages dir" && \
+    echo "=== Checking packages/web ===" && \
+    ls -la packages/web/ 2>/dev/null || echo "No packages/web" && \
+    echo "=== Checking node_modules ===" && \
+    ls -la node_modules/ | head -10 && \
+    echo "=== Looking for next module ===" && \
+    find . -type d -name "next" 2>/dev/null | grep node_modules | head -5
 
 USER nextjs
 

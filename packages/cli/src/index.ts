@@ -6,11 +6,11 @@ import { OllamaProvider } from "./providers/ollama.js";
 import { OpenRouterProvider } from "./providers/openrouter.js";
 import { REPL } from "./cli/repl.js";
 import type { Provider, ChatOptions } from "./providers/base.js";
-import { InMemoryMessageHistory } from "@ai-chat/shared/storage/InMemoryMessageHistory.js";
-import { RedisMessageHistory } from "@ai-chat/shared/storage/RedisMessageHistory.js";
-import type { MessageHistory } from "@ai-chat/shared/storage/MessageHistory.js";
-import { RedisSessionStore } from "@ai-chat/shared/storage/RedisSessionStore.js";
-import type { SessionStore } from "@ai-chat/shared/storage/SessionStore.js";
+import { InMemoryMessageHistory } from "@ai-chat/shared/storage/InMemoryMessageHistory";
+import { RedisMessageHistory } from "@ai-chat/shared/storage/RedisMessageHistory";
+import type { MessageHistory } from "@ai-chat/shared/storage/MessageHistory";
+import { RedisSessionStore } from "@ai-chat/shared/storage/RedisSessionStore";
+import type { SessionStore } from "@ai-chat/shared/storage/SessionStore";
 import {
   StdoutView,
   RedisPublisherView,
