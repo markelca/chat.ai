@@ -7,10 +7,8 @@ export const dynamic = 'force-dynamic';
  * GET /api/sessions/{sessionName}/messages
  * Returns all messages for a specific session.
  */
-export async function GET(
-  request: Request,
-  { params }: { params: { sessionName: string } }
-) {
+export async function GET(request: Request, props: { params: Promise<{ sessionName: string }> }) {
+  const params = await props.params;
   const { sessionName } = params;
 
   if (!sessionName) {

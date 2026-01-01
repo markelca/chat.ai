@@ -10,9 +10,7 @@ const nextConfig = {
   // Transpile workspace packages (required for monorepos)
   transpilePackages: ['@ai-chat/shared'],
   // Tell Next.js where the monorepo root is for file tracing
-  experimental: {
-    outputFileTracingRoot: path.join(__dirname, '../../'),
-  },
+  outputFileTracingRoot: path.join(__dirname, '../../'),
 };
 
 export default nextConfig;
